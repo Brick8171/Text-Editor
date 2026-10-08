@@ -1459,7 +1459,10 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   }
   function schedulePaginate(force){
     if(pageRequest!==null)cancelAnimationFrame(pageRequest);
-    pageRequest=requestAnimationFrame(function(){pageRequest=null;paginate(!!force);count()});
+    pageRequest=requestAnimationFrame(function(){
+      pageRequest=null;paginate(!!force);count();
+      if(writerHistoryPending){writerHistoryCommit(writerHistoryPending);writerHistoryPending=null}
+    });
   }
   var d=load(KEY)||load('writer-doc-v1');if(d){try{var o=JSON.parse(d);if(o.html)page.innerHTML=writerSanitizeHtml(o.html);if(o.name)$('docname').value=o.name;if(o.layout)Object.assign(pageLayout,o.layout)}catch(e){}}
   ensureSheets();
@@ -1493,8 +1496,129 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   function saveSel(){var s=getSelection();if(s.rangeCount&&page.contains(s.anchorNode))saved=s.getRangeAt(0).cloneRange()}
   function restoreSel(){page.focus();if(saved){try{if(!page.contains(saved.commonAncestorContainer))throw Error('Selection was removed');var s=getSelection();s.removeAllRanges();s.addRange(saved)}catch(e){saved=null}}}
   document.addEventListener('selectionchange',function(){saveSel();state()});
-  function cmd(c,v){restoreSel();document.execCommand(c,false,v||null);after()}
-  function after(){saveSel();state();schedulePaginate();count();persist()}
+
+  /* A single undo history for browser typing AND script-driven edits.
+     Direct changes to borders and table cells are invisible to the browser's
+     execCommand undo stack. Storing document snapshots also survives the
+     sheet paginator moving and splitting nodes across pages. */
+  var writerHistory=[],writerHistoryPosition=-1,writerHistoryPending=null;
+  var writerHistoryLastKind='',writerHistoryLastTime=0,writerHistoryBusy=false;
+  function writerNodePath(node){
+    var path=[];
+    while(node&&node!==page){
+      var parent=node.parentNode;if(!parent)return null;
+      path.unshift(Array.prototype.indexOf.call(parent.childNodes,node));node=parent;
+    }
+    return node===page?path:null;
+  }
+  function writerNodeAt(path){
+    if(!path)return null;var n=page;
+    for(var index of path){if(!n.childNodes||!n.childNodes[index])return null;n=n.childNodes[index]}
+    return n;
+  }
+  function writerSelectionBookmark(){
+    var sel=getSelection(),r=null;
+    if(sel.rangeCount&&page.contains(sel.getRangeAt(0).commonAncestorContainer))r=sel.getRangeAt(0);
+    else if(saved&&page.contains(saved.commonAncestorContainer))r=saved;
+    if(!r)return null;
+    var start=writerNodePath(r.startContainer),end=writerNodePath(r.endContainer);
+    return start&&end?{start:start,end:end,startOffset:r.startOffset,endOffset:r.endOffset}:null;
+  }
+  function writerHistorySnapshot(){
+    return {html:page.innerHTML,key:flatDocument().innerHTML,selection:writerSelectionBookmark(),scrollTop:sc.scrollTop};
+  }
+  function writerHistoryRestoreSelection(mark){
+    if(!mark)return;
+    var a=writerNodeAt(mark.start),b=writerNodeAt(mark.end);if(!a||!b)return;
+    try{
+      var range=document.createRange();
+      range.setStart(a,Math.min(mark.startOffset,a.nodeType===3?a.length:a.childNodes.length));
+      range.setEnd(b,Math.min(mark.endOffset,b.nodeType===3?b.length:b.childNodes.length));
+      var sel=getSelection();sel.removeAllRanges();sel.addRange(range);saved=range.cloneRange();
+    }catch(e){}
+  }
+  function writerHistoryCommit(kind){
+    if(writerHistoryBusy)return;
+    var snap=writerHistorySnapshot(),current=writerHistory[writerHistoryPosition];
+    if(current&&snap.key===current.key){
+      // Updating the caret bookmark must not create an undo step.
+      current.selection=snap.selection||current.selection;
+      return;
+    }
+    var now=Date.now();
+    if(writerHistoryPosition<writerHistory.length-1)writerHistory.length=writerHistoryPosition+1;
+    if(kind==='typing'&&writerHistoryLastKind==='typing'&&now-writerHistoryLastTime<850&&writerHistoryPosition>0){
+      writerHistory[writerHistoryPosition]=snap;
+    }else{
+      writerHistory.push(snap);writerHistoryPosition=writerHistory.length-1;
+    }
+    writerHistoryLastKind=kind;writerHistoryLastTime=now;
+    var bytes=writerHistory.reduce(function(n,x){return n+x.html.length},0);
+    while(writerHistory.length>2&&(writerHistory.length>85||bytes>24*1024*1024)){
+      bytes-=writerHistory[0].html.length;writerHistory.shift();writerHistoryPosition--;
+    }
+  }
+  function writerHistoryReset(){
+    writerHistory=[writerHistorySnapshot()];writerHistoryPosition=0;
+    writerHistoryPending=null;writerHistoryLastKind='';writerHistoryLastTime=0;
+  }
+  function writerHistoryBegin(){
+    if(writerHistoryBusy)return;
+    // Capture typing that has not reached the next animation frame yet.
+    if(writerHistoryPending){writerHistoryCommit(writerHistoryPending);writerHistoryPending=null}
+    var current=writerHistory[writerHistoryPosition],snap=writerHistorySnapshot();
+    if(!current||snap.key!==current.key)writerHistoryCommit('typing');
+    else current.selection=snap.selection||current.selection;
+  }
+  function writerHistoryQueue(kind){
+    if(writerHistoryBusy)return;
+    if(kind==='command'||!writerHistoryPending)writerHistoryPending=kind;
+  }
+  function writerHistoryFlush(){
+    if(pageRequest!==null){cancelAnimationFrame(pageRequest);pageRequest=null;paginate(false)}
+    if(writerHistoryPending){writerHistoryCommit(writerHistoryPending);writerHistoryPending=null}
+    else if(writerHistoryPosition>=0)writerHistoryCommit('typing');
+  }
+  function writerHistoryStep(direction){
+    writerHistoryFlush();
+    var next=writerHistoryPosition+direction;
+    if(next<0||next>=writerHistory.length)return;
+    var state=writerHistory[next];writerHistoryBusy=true;
+    try{
+      if(pageRequest!==null){cancelAnimationFrame(pageRequest);pageRequest=null}
+      writerHistoryPosition=next;writerHistoryPending=null;writerHistoryLastKind='';
+      // Content snapshots include the original sheet structure, avoiding
+      // pagination losses for empty lines, tables and split paragraphs.
+      page.innerHTML=state.html;ensureSheets();
+      if(typeof selectPicture==='function')selectPicture(null);
+      saved=null;
+      page.focus({preventScroll:true});
+      writerHistoryRestoreSelection(state.selection);
+      sc.scrollTop=state.scrollTop;
+      state&&count();persist();
+    }finally{writerHistoryBusy=false}
+    requestAnimationFrame(function(){positionImageHandles();followCaret(false)});
+  }
+  document.addEventListener('keydown',function(e){
+    if(!(e.ctrlKey||e.metaKey)||e.altKey)return;
+    var k=e.key.toLowerCase();
+    if(k!=='z'&&k!=='y')return;
+    var t=e.target;
+    if(t&&t!==page&&(t.matches&&t.matches('input,textarea,select,[contenteditable="true"]'))&&!page.contains(t))return;
+    if(t!==page&&!page.contains(t)&&!(saved&&page.contains(saved.commonAncestorContainer)))return;
+    e.preventDefault();e.stopPropagation();
+    writerHistoryStep(k==='y'||(k==='z'&&e.shiftKey)?1:-1);
+  },true);
+  page.addEventListener('beforeinput',function(e){
+    if(e.inputType==='historyUndo'||e.inputType==='historyRedo'){
+      e.preventDefault();writerHistoryStep(e.inputType==='historyUndo'?-1:1);
+    }
+  });
+  function cmd(c,v){
+    if(c==='undo'||c==='redo'){writerHistoryStep(c==='redo'?1:-1);return}
+    writerHistoryBegin();restoreSel();document.execCommand(c,false,v||null);after();
+  }
+  function after(){saveSel();state();writerHistoryQueue('command');schedulePaginate();count();persist()}
   /* Word-like line/paragraph spacing and borders (selected paragraphs or cells). */
   var activePopup=null;
   function closePopup(){
@@ -1560,7 +1684,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     if(activePopup&&!$(activePopup).contains(e.target)&&e.target!==$('spacingbtn')&&e.target!==$('bordersbtn'))closePopup();
   });
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closePopup()});
-  function changeParagraphs(f){var blocks=selectionBlocks();if(!blocks.length){say('Place the cursor inside a paragraph.');return}blocks.forEach(f);after();closePopup()}
+  function changeParagraphs(f){var blocks=selectionBlocks();if(!blocks.length){say('Place the cursor inside a paragraph.');return}writerHistoryBegin();blocks.forEach(f);after();closePopup()}
   function applyWordLine(el,n){el.setAttribute('data-writer-word-line',String(Math.round(n*240)));el.style.lineHeight=String(Math.round(n*WRITER_WORD_LINE_SCALE*10000)/10000)}
   $('spacingmenu').querySelectorAll('[data-line]').forEach(function(button){button.addEventListener('click',function(){var n=parseFloat(this.dataset.line);changeParagraphs(function(el){applyWordLine(el,n)})})});
   $('spacebefore').addEventListener('click',function(){var block=selectionBlocks()[0],v=block?parseFloat(getComputedStyle(block).marginTop):0;changeParagraphs(function(el){el.style.marginTop=v>.6?'0pt':'8pt'})});
@@ -1573,6 +1697,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   function applyBorders(which){
     var targets=selectionCells();if(!targets.length)targets=selectionBlocks();
     if(!targets.length){say('Select a paragraph or table cell first.');return}
+    writerHistoryBegin();
     var thick=$('borderwidth').value+'px solid '+$('bordercolor').value;
     var all=['Top','Bottom','Left','Right'];
     targets.forEach(function(el,i){
@@ -1597,7 +1722,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   function insertTextBorder(which){
     var range=selectedTextRange();
     if(!range){say('Highlight text within one paragraph to add a text border.');closePopup();return}
-    which=which||'all';
+    which=which||'all';writerHistoryBegin();
     // Reapplying a different border to an already outlined selection should
     // update the existing span, rather than add nested border rectangles.
     var candidate=range.commonAncestorContainer.nodeType===1?range.commonAncestorContainer:range.commonAncestorContainer.parentElement;
@@ -1623,6 +1748,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     if(!range){say('Highlight text with a text border first.');closePopup();return}
     var candidates=Array.from(page.querySelectorAll('span[data-writer-text-border="1"]')).filter(function(el){return range.intersectsNode(el)});
     if(!candidates.length){say('No text border found in the selection.');closePopup();return}
+    writerHistoryBegin();
     candidates.forEach(function(el){
       var parent=el.parentNode;if(!parent)return;
       // Keep text styling and contents. The wrapper only holds the border itself.
@@ -1768,7 +1894,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   $('fcolor').addEventListener('change',function(){cmd('foreColor',this.value)});
   $('hcolor').addEventListener('change',function(){cmd('hiliteColor',this.value)});
 
-  function html(h){restoreSel();document.execCommand('insertHTML',false,h);after()}
+  function html(h){writerHistoryBegin();restoreSel();document.execCommand('insertHTML',false,h);after()}
   // A real page break, shared by Insert > Page break and Ctrl/Cmd + Enter.
   // Place the caret in the newly inserted paragraph rather than beside the
   // break; the paginator then moves that paragraph onto the following sheet.
@@ -2059,9 +2185,9 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   $('url').addEventListener('keydown',function(e){if(e.key==='Enter')$('linkok').click()});
 
   function cell(){var s=getSelection();var n=s.anchorNode;while(n&&n!==page){if(n.nodeName==='TD'||n.nodeName==='TH')return n;n=n.parentNode}return null}
-  $('rowadd').addEventListener('click',function(){restoreSel();var c=cell();if(!c)return;var tr=c.parentNode,n=tr.cloneNode(true);n.querySelectorAll('td,th').forEach(function(x){x.innerHTML='&nbsp;'});tr.parentNode.insertBefore(n,tr.nextSibling);after()});
-  $('coladd').addEventListener('click',function(){restoreSel();var c=cell();if(!c)return;var i=c.cellIndex;c.closest('table').querySelectorAll('tr').forEach(function(tr){var x=document.createElement('td');x.innerHTML='&nbsp;';tr.insertBefore(x,tr.cells[i+1]||null)});after()});
-  $('tbldel').addEventListener('click',function(){restoreSel();var c=cell();if(c){c.closest('table').remove();after()}});
+  $('rowadd').addEventListener('click',function(){restoreSel();var c=cell();if(!c)return;writerHistoryBegin();var tr=c.parentNode,n=tr.cloneNode(true);n.querySelectorAll('td,th').forEach(function(x){x.innerHTML='&nbsp;'});tr.parentNode.insertBefore(n,tr.nextSibling);after()});
+  $('coladd').addEventListener('click',function(){restoreSel();var c=cell();if(!c)return;writerHistoryBegin();var i=c.cellIndex;c.closest('table').querySelectorAll('tr').forEach(function(tr){var x=document.createElement('td');x.innerHTML='&nbsp;';tr.insertBefore(x,tr.cells[i+1]||null)});after()});
+  $('tbldel').addEventListener('click',function(){restoreSel();var c=cell();if(c){writerHistoryBegin();c.closest('table').remove();after()}});
 
   page.addEventListener('click',function(e){if(e.target.closest('a')&&!e.ctrlKey&&!e.metaKey)e.preventDefault()});
 
@@ -2089,7 +2215,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     try{localStorage.setItem(KEY,JSON.stringify({html:documentHtml(),name:$('docname').value,layout:pageLayout}));$('autosave').textContent='Saved locally'}
     catch(e){$('autosave').textContent='Autosave unavailable — download your file';say('Autosave is unavailable here. Please save your document as .docx or HTML.')}
   },550)}
-  page.addEventListener('input',function(){schedulePaginate();count();persist()});
+  page.addEventListener('input',function(){writerHistoryQueue('typing');schedulePaginate();count();persist()});
   sc.addEventListener('scroll',count);
   $('docname').addEventListener('input',persist);
   page.addEventListener('keydown',function(e){
@@ -2171,7 +2297,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   $('nyes').addEventListener('click',function(){$('notice').style.display='none';var f=pend;pend=null;if(f)f()});
   $('nno').addEventListener('click',function(){$('notice').style.display='none';pend=null});
   function isEmpty(){return page.innerText.trim().length===0&&!page.querySelector('img,table')}
-  function newDoc(){page.innerHTML='<p><br></p>';ensureSheets();$('docname').value='Document1';pageLayout={paper:'a4',orientation:'portrait',margins:'normal',line:'1.15',custom:null};applyLayout();saved=null;after();page.focus()}
+  function newDoc(){page.innerHTML='<p><br></p>';ensureSheets();$('docname').value='Document1';pageLayout={paper:'a4',orientation:'portrait',margins:'normal',line:'1.15',custom:null};applyLayout();saved=null;page.focus();writerHistoryReset();state();count();persist()}
   $('newdoc').addEventListener('click',function(){if(isEmpty())newDoc();else ask('Start a new document? The current text will be cleared.',newDoc,'New document')});
   $('print').addEventListener('click',function(){refreshDateFields();window.print()});
 
@@ -2192,7 +2318,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
       refreshDateFields();
       $('docname').value=file.name.replace(/\.(docx|html?|txt)$/i,'')||'Document1';
       if(layout)loadImportedLayout(layout);
-      sc.scrollTop=0;schedulePaginate(true);after();
+      sc.scrollTop=0;schedulePaginate(true);writerHistoryReset();state();count();persist();
       say('Opened '+file.name+(ext==='docx'?'. Advanced Word layouts may be simplified.':'.'));
     }catch(e){say('Could not open the file: '+(e.message||'Invalid document'))}
     finally{$('autosave').textContent='Saved locally'}
@@ -2272,7 +2398,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   $('zfit').addEventListener('click',function(){userZoom=null;fit()});
   addEventListener('resize',fit);
 
-  refreshDateFields();applyLayout();fit();schedulePaginate(true);state();count();
+  refreshDateFields();applyLayout();fit();schedulePaginate(true);state();count();writerHistoryReset();
 })();
 </script>
 </body>
