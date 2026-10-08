@@ -547,10 +547,10 @@ async function writerReadDocx(file){
     var hex=String(charHex||'').replace(/[^0-9a-f]/ig,'').toUpperCase();if(!hex)return '';
     var fontName=(font||'').trim(),family=fontName.toLowerCase(),num=parseInt(hex,16),low=('0'+(num&255).toString(16)).slice(-2).toUpperCase();
     var common={
-      wingdings:{'28':'☎','29':'✆','FC':'✔','FB':'✗','A8':'●','6C':'✉','3D':'☜','3E':'☞'},
-      'wingdings 2':{'27':'☎','28':'📞','37':'📠'},
-      wingdings2:{'27':'☎','28':'📞','54':'☑','52':'☒','A3':'➜'},
-      webdings:{'28':'☎','3D':'✉','3E':'🖂'}
+      wingdings:{'28':'☏','29':'✆','FC':'✔','FB':'✗','A8':'●','6C':'✉','3D':'☜','3E':'☞'},
+      'wingdings 2':{'27':'☏','28':'📞','37':'📠'},
+      wingdings2:{'27':'☏','28':'📞','54':'☑','52':'☒','A3':'➜'},
+      webdings:{'28':'☏','3D':'✉','3E':'🖂'}
     };
     if(common[family]&&common[family][low])return common[family][low];
     if(!/wingdings|webdings|symbol/.test(family)&&num>=32&&num<=0x10ffff){try{return String.fromCodePoint(num)}catch(e){}}
@@ -619,7 +619,7 @@ async function writerReadDocx(file){
       var va=val(style,'vertAlign');if(va==='superscript')set('verticalAlign','super');if(va==='subscript')set('verticalAlign','sub');
     }
     for(var c of node.children){
-      if(c.localName==='t'||c.localName==='delText'){var content=c.textContent;if(/^wingdings\s*2$/i.test(face)){content=content.replace(/'/g,'☎').replace(/\(/g,'📞');holder.style.fontFamily='Arial, sans-serif'}else if(/^wingdings$/i.test(face)){content=content.replace(/\(/g,'☎');holder.style.fontFamily='Arial, sans-serif'}holder.appendChild(document.createTextNode(content))}
+      if(c.localName==='t'||c.localName==='delText'){var content=c.textContent;if(/^wingdings\s*2$/i.test(face)){content=content.replace(/'/g,'☏').replace(/\(/g,'📞');holder.style.fontFamily='Arial, sans-serif'}else if(/^wingdings$/i.test(face)){content=content.replace(/\(/g,'☏');holder.style.fontFamily='Arial, sans-serif'}holder.appendChild(document.createTextNode(content))}
       else if(c.localName==='tab')holder.appendChild(document.createTextNode('\u00a0\u00a0\u00a0\u00a0'));
       else if(c.localName==='sym'){
         var symbol=decodeWordSymbol(attr(c,'font'),attr(c,'char'));
