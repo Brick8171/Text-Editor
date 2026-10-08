@@ -113,8 +113,11 @@ select{height:24px;border:1px solid var(--fieldline);border-radius:2px;backgroun
   #top,#ribbon,#linkbar,#notice,#status,#ruler{display:none!important}
   #scroll{overflow:visible;padding:0}
   #wrap{zoom:1!important}
-  #page{box-shadow:none;width:auto;min-height:0;padding:0;background-image:none!important}
-  @page{size:A4 portrait;margin:1in}
+  /* Browser-generated titles/URLs need a zero-margin CSS page.
+     Keep the chosen document margins INSIDE the printed page instead. */
+  #page{box-shadow:none;width:auto;min-height:0;padding:var(--paper-margin);background-image:none!important;
+        -webkit-box-decoration-break:clone;box-decoration-break:clone}
+  @page{size:A4 portrait;margin:0}
 }
 
 /* editor enhancements */
@@ -640,6 +643,21 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   var pageLayout={paper:'a4',orientation:'portrait',margins:'normal',line:'1.08',custom:null};
   var PAPER={a4:{w:11906,h:16838,label:'A4'},letter:{w:12240,h:15840,label:'letter'},legal:{w:12240,h:20160,label:'legal'}};
   var MARGINS={normal:1440,moderate:1080,narrow:720};
+  // Chromium 131+ supports page-margin boxes. Blank them so we can keep
+  // real per-page margins AND suppress the browser's title/URL/date/page labels.
+  // Firefox and older engines use a zero-margin fallback with document padding.
+  var PRINT_MARGIN_BOXES=(function(){
+    try{
+      var test=document.createElement('style');
+      test.textContent='@page{@top-left{content:""}}';
+      document.head.appendChild(test);
+      var rule=test.sheet.cssRules[0];
+      var yes=!!(rule&&rule.cssRules&&rule.cssRules.length);
+      test.remove();
+      return yes;
+    }catch(e){return false}
+  })();
+  var EMPTY_PRINT_MARGIN_BOXES=['top-left','top-center','top-right','bottom-left','bottom-center','bottom-right'].map(function(where){return '@'+where+'{content:""}'}).join('');
   function layoutTwips(){
     if(pageLayout.custom)return pageLayout.custom;
     var t=PAPER[pageLayout.paper]||PAPER.a4;
@@ -658,7 +676,10 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     $('margins').value=pageLayout.margins;
     $('linespacing').value=pageLayout.line;
     var ps=document.getElementById('print-page-settings');if(!ps){ps=document.createElement('style');ps.id='print-page-settings';document.head.appendChild(ps)}
-    ps.textContent='@media print{@page{size:'+pageLayout.paper+' '+pageLayout.orientation+';margin:'+(margin/96)+'in}}';
+    var pageSize=pageLayout.paper+' '+pageLayout.orientation;
+    ps.textContent=PRINT_MARGIN_BOXES
+      ? '@media print{@page{size:'+pageSize+';margin:'+(margin/96)+'in;'+EMPTY_PRINT_MARGIN_BOXES+'}#page{padding:0!important}}'
+      : '@media print{@page{size:'+pageSize+';margin:0}}';
     fit();count();
   }
   function loadImportedLayout(l){
@@ -952,7 +973,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   }
   function safeName(){return ($('docname').value.trim()||'Document').replace(/[\\\/:*?"<>|]+/g,'-')}
   $('savehtml').addEventListener('click',function(){
-    var name=safeName()+'.html';var css='<style>body{background:#e5e5e5;margin:20px}article{margin:auto;width:min(100%,794px);background:white;box-shadow:0 2px 12px #0002;min-height:500px;padding:8%;font:11pt/1.2 Calibri,Arial,sans-serif;box-sizing:border-box}img{max-width:100%;height:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #666;padding:6px}h1,h2,h3{color:#2f5496}@media print{body{background:white;margin:0}article{padding:0;box-shadow:none}@page{margin:1in}}</style>';
+    var name=safeName()+'.html';var css='<style>body{background:#e5e5e5;margin:20px}article{margin:auto;width:min(100%,794px);background:white;box-shadow:0 2px 12px #0002;min-height:500px;padding:8%;font:11pt/1.2 Calibri,Arial,sans-serif;box-sizing:border-box}img{max-width:100%;height:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #666;padding:6px}h1,h2,h3{color:#2f5496}@media print{body{background:white;margin:0}article{padding:var(--print-margin, 1in);box-shadow:none;box-decoration-break:clone;-webkit-box-decoration-break:clone}@page{margin:0}}</style>';
     var html='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+safeName().replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</title>'+css+'</head><body><article data-writer-document contenteditable="true" spellcheck="true">'+writerSanitizeHtml(page.innerHTML)+'</article></body></html>';
     downloadFile(html,name,'text/html;charset=utf-8');say('Downloaded '+name);
   });
