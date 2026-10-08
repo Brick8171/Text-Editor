@@ -142,6 +142,19 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
 #help-dialog::backdrop{background:#0007}
 #help-dialog h2{margin:0 0 10px}#help-dialog button{background:var(--blue);color:white;border:0;border-radius:5px;padding:6px 16px;cursor:pointer}
 #help-dialog kbd{border:1px solid var(--fieldline);background:var(--field);border-radius:3px;padding:1px 4px}
+/* Word-like paragraph and border menus live outside the scrollable ribbon. */
+.editor-popup{position:fixed;z-index:1000;display:none;min-width:224px;max-height:min(72vh,540px);overflow:auto;background:var(--rib);color:var(--text);border:1px solid var(--ribline);border-radius:5px;box-shadow:0 8px 28px #0003;padding:6px;font-size:12px;text-align:left}
+.editor-popup.open{display:block}
+.editor-popup button{width:100%;border:1px solid transparent;display:flex;align-items:center;justify-content:space-between;min-height:29px;gap:8px;background:transparent;color:inherit;border-radius:3px;padding:5px 9px;text-align:left;cursor:pointer;font:inherit}
+.editor-popup button:hover,.editor-popup button:focus-visible{background:var(--hover);outline:none}
+.editor-popup button.on{background:var(--active)}
+.editor-popup .menu-title{padding:8px 9px 5px;font-weight:600;color:var(--muted)}
+.editor-popup .menu-line{margin:5px 4px;border:0;border-top:1px solid var(--ribline)}
+.editor-popup .menu-fields{display:grid;grid-template-columns:1fr 72px;align-items:center;gap:7px;padding:5px 9px}
+.editor-popup .menu-fields input,.editor-popup .menu-fields select{max-width:100%;height:25px;border:1px solid var(--fieldline);border-radius:3px;background:var(--field);color:var(--text);padding:2px 4px;font:inherit}
+.editor-popup .menu-fields input[type=color]{padding:1px;width:44px}
+.editor-popup .menu-info{color:var(--muted);font-size:11px;padding:3px 9px 6px}
+.editor-popup .menu-primary{margin-top:5px;background:var(--active);justify-content:center;font-weight:600}
 @media (max-width:600px){#title{padding:5px 7px}#title .app{font-size:11px}#status{gap:8px;padding:3px 7px}#status .savestate{display:none}#ribbon{height:94px}.grp{padding-left:5px;padding-right:5px}}
 </style>
 </head>
@@ -177,7 +190,7 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
       </div></div><div class="lbl">Font</div></div>
     <div class="grp"><div class="body">
       <div class="row"><button class="i" data-cmd="insertUnorderedList" title="Bullets" data-ic="ul"></button><button class="i" data-cmd="insertOrderedList" title="Numbering" data-ic="ol"></button><span class="sep"></span><button class="i" data-cmd="outdent" title="Decrease indent" data-ic="outdent"></button><button class="i" data-cmd="indent" title="Increase indent" data-ic="indent"></button></div>
-      <div class="row"><button class="i" data-cmd="justifyLeft" title="Align left" data-ic="left"></button><button class="i" data-cmd="justifyCenter" title="Center" data-ic="center"></button><button class="i" data-cmd="justifyRight" title="Align right" data-ic="right"></button><button class="i" data-cmd="justifyFull" title="Justify" data-ic="justify"></button></div>
+      <div class="row"><button class="i" data-cmd="justifyLeft" title="Align left" data-ic="left"></button><button class="i" data-cmd="justifyCenter" title="Center" data-ic="center"></button><button class="i" data-cmd="justifyRight" title="Align right" data-ic="right"></button><button class="i" data-cmd="justifyFull" title="Justify" data-ic="justify"></button><span class="sep"></span><button class="i" id="spacingbtn" title="Line and paragraph spacing" aria-haspopup="true" aria-expanded="false" data-ic="spacing"></button><button class="i" id="bordersbtn" title="Paragraph and table borders" aria-haspopup="true" aria-expanded="false" data-ic="borders"></button></div>
     </div><div class="lbl">Paragraph</div></div>
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="find" title="Find / replace (Ctrl+H)"><span data-ic="search"></span>Find / Replace</button></div></div><div class="lbl">Editing</div></div><div class="grp" style="border-right:0"><div class="body" style="justify-content:stretch"><div id="gallery">
       <button data-blk="p" title="Normal"><span class="n">Normal</span></button>
@@ -197,7 +210,7 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
   <!-- LAYOUT -->
   <div class="panel" id="p-layout">
     <div class="grp"><div class="body"><div class="row"><span style="min-width:58px">Paper</span><select id="papersize" title="Paper size"><option value="a4">A4</option><option value="letter">US Letter</option><option value="legal">US Legal</option></select></div><div class="row"><span style="min-width:58px">Orientation</span><select id="orientation" title="Page orientation"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></div></div><div class="lbl">Page setup</div></div>
-    <div class="grp"><div class="body"><div class="row"><span style="min-width:58px">Margins</span><select id="margins" title="Document margins"><option value="normal">Normal (1 in)</option><option value="moderate">Moderate (0.75 in)</option><option value="narrow">Narrow (0.5 in)</option></select></div><div class="row"><span style="min-width:58px">Spacing</span><select id="linespacing" title="Line spacing"><option value="1">Single</option><option value="1.15" selected>1.15</option><option value="1.5">1.5</option><option value="2">Double</option></select></div></div><div class="lbl">Paragraph</div></div>
+    <div class="grp"><div class="body"><div class="row"><span style="min-width:58px">Margins</span><select id="margins" title="Document margins"><option value="normal">Normal (1 in)</option><option value="moderate">Moderate (0.75 in)</option><option value="narrow">Narrow (0.5 in)</option></select></div><div class="row"><span style="min-width:58px">Spacing</span><select id="linespacing" title="Line spacing"><option value="1">Single</option><option value="1.15" selected>1.15</option><option value="1.5">1.5</option><option value="2">Double</option><option value="2.5">2.5</option><option value="3">Triple (3)</option></select></div></div><div class="lbl">Paragraph</div></div>
   </div>
   <!-- VIEW -->
   <div class="panel" id="p-view">
@@ -205,6 +218,26 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="rulerbtn"><span data-ic="ruler"></span>Ruler</button><button class="big" id="guidebtn"><span data-ic="pagebreak"></span>Page guides</button></div></div><div class="lbl">Show</div></div>
     <div class="grp" style="border-right:0"><div class="body"><div class="bigrow"><button class="big" id="theme"><span data-ic="moon"></span>Dark / light</button><button class="big" id="help" title="Keyboard shortcuts"><span data-ic="help"></span>Help</button></div></div><div class="lbl">Appearance</div></div>
   </div>
+</div>
+<div id="spacingmenu" class="editor-popup" role="menu" aria-label="Line and paragraph spacing">
+  <div class="menu-title">Line spacing</div>
+  <button data-line="1">1.0 — Single</button><button data-line="1.15">1.15 — Word default</button><button data-line="1.5">1.5</button><button data-line="2">2.0 — Double</button><button data-line="2.5">2.5</button><button data-line="3">3.0 — Triple</button>
+  <hr class="menu-line">
+  <button id="spacebefore">Add Space Before Paragraph</button><button id="spaceafter">Add Space After Paragraph</button><button id="nospacing">No Spacing (0 pt)</button>
+  <hr class="menu-line"><div class="menu-title">Custom paragraph spacing</div>
+  <label class="menu-fields"><span>Line spacing</span><input id="customline" type="number" min="0.5" max="6" step="0.05" value="1.15"></label>
+  <label class="menu-fields"><span>Before (pt)</span><input id="beforept" type="number" min="0" max="144" step="1" value="0"></label>
+  <label class="menu-fields"><span>After (pt)</span><input id="afterpt" type="number" min="0" max="144" step="1" value="8"></label>
+  <button id="applyspacing" class="menu-primary">Apply spacing</button>
+</div>
+<div id="bordersmenu" class="editor-popup" role="menu" aria-label="Paragraph and table borders">
+  <div class="menu-title">Borders</div>
+  <button data-border="bottom">Bottom Border</button><button data-border="top">Top Border</button><button data-border="left">Left Border</button><button data-border="right">Right Border</button>
+  <button data-border="outside">Outside Borders</button><button data-border="all">All Borders</button><button data-border="none">No Border</button>
+  <hr class="menu-line"><div class="menu-title">Border options</div>
+  <label class="menu-fields"><span>Line width</span><select id="borderwidth"><option value="0.5">0.5 px</option><option value="1" selected>1 px</option><option value="1.5">1.5 px</option><option value="2">2 px</option><option value="3">3 px</option></select></label>
+  <label class="menu-fields"><span>Line color</span><input id="bordercolor" type="color" value="#444444"></label>
+  <div class="menu-info">Select paragraphs or click inside a table cell before applying a border.</div>
 </div>
 <div id="findbar"><input id="findtext" placeholder="Find in document" aria-label="Find text"><input id="replacetext" placeholder="Replace with" aria-label="Replacement text"><button id="prevfind">↑ Previous</button><button id="nextfind">↓ Next</button><button id="replaceone">Replace</button><button id="replaceall">Replace all</button><span id="findcount"></span><button id="closefind" aria-label="Close find bar">✕</button></div>
 <div id="tablebar"><span>Insert table:</span><label>Rows <input id="tablerows" type="number" min="1" max="25" value="3"></label><label>Columns <input id="tablecols" type="number" min="1" max="12" value="3"></label><button id="tableok">Insert table</button><button id="tablecancel">Cancel</button></div>
@@ -238,7 +271,7 @@ function writerSanitizeHtml(source) {
   var root = doc.getElementById('writer-sanitize-root'), out=document.createElement('div');
   var tags=new Set('p div br h1 h2 h3 h4 h5 h6 span b strong i em u s strike del sub sup blockquote pre code ul ol li table tbody thead tfoot tr th td a img hr font'.split(' '));
   var unsafe=new Set('script style iframe object embed form input button select textarea svg math meta link base template video audio frame frameset'.split(' '));
-  var allowedStyles=new Set('color background-color font-family font-size font-weight font-style text-align text-decoration text-decoration-line line-height margin-left margin-right padding-left padding-right width height vertical-align'.split(' '));
+  var allowedStyles=new Set('color background-color font-family font-size font-weight font-style text-align text-decoration text-decoration-line line-height margin-left margin-right margin-top margin-bottom text-indent padding-left padding-right width height vertical-align border border-top border-bottom border-left border-right border-width border-style border-color border-top-width border-top-style border-top-color border-bottom-width border-bottom-style border-bottom-color border-left-width border-left-style border-left-color border-right-width border-right-style border-right-color'.split(' '));
   function walk(node,parent){
     if(node.nodeType===3){parent.appendChild(document.createTextNode(node.nodeValue));return}
     if(node.nodeType!==1)return;
@@ -291,14 +324,20 @@ async function writerReadDocx(file){
     for(var abstr of descendants(nd,'abstractNum')){var fm=val(one(abstr,'lvl'),'numFmt');numberStyles[attr(abstr,'abstractNumId')]=fm||'bullet'}
     for(var n of descendants(nd,'num'))numbered[attr(n,'numId')]=numberStyles[val(n,'abstractNumId')]||'bullet';
   }
-  var styleNames={};var se=zip.file('word/styles.xml');
-  if(se){var sd=xml(await se.async('string'));for(var st of descendants(sd,'style')){var id=attr(st,'styleId'),nm=val(st,'name');if(id)styleNames[id]=nm||id}}
+  var styleNames={},styleDefs={},defaultPPr=null;var se=zip.file('word/styles.xml');
+  if(se){var sd=xml(await se.async('string'));defaultPPr=one(one(one(sd.documentElement,'docDefaults'),'pPrDefault'),'pPr');
+    for(var st of descendants(sd,'style')){
+      var id=attr(st,'styleId'),nm=val(st,'name');if(id){styleNames[id]=nm||id;styleDefs[id]={font:attr(one(one(st,'rPr'),'rFonts'),'ascii')||attr(one(one(st,'rPr'),'rFonts'),'hAnsi'),basedOn:val(st,'basedOn'),pPr:one(st,'pPr')};}
+    }
+  }
+  function inheritedFont(id){for(var i=0;i<8&&id;i++){var rule=styleDefs[id];if(!rule)break;if(rule.font)return rule.font;id=rule.basedOn}return ''}
   function decodeWordSymbol(font,charHex){
     var hex=String(charHex||'').replace(/[^0-9a-f]/ig,'').toUpperCase();if(!hex)return '';
     var fontName=(font||'').trim(),family=fontName.toLowerCase(),num=parseInt(hex,16),low=('0'+(num&255).toString(16)).slice(-2).toUpperCase();
     var common={
       wingdings:{'28':'☎','29':'✆','FC':'✔','FB':'✗','A8':'●','6C':'✉','3D':'☜','3E':'☞'},
-      wingdings2:{'28':'☎','29':'✆','54':'☑','52':'☒','A3':'➜'},
+      'wingdings 2':{'27':'☎','28':'📞','37':'📠'},
+      wingdings2:{'27':'☎','28':'📞','54':'☑','52':'☒','A3':'➜'},
       webdings:{'28':'☎','3D':'✉','3E':'🖂'}
     };
     if(common[family]&&common[family][low])return common[family][low];
@@ -309,13 +348,14 @@ async function writerReadDocx(file){
     if(!prop)return;
     var spacing=one(prop,'spacing');if(spacing){
       var before=+attr(spacing,'before'),after=+attr(spacing,'after'),line=+attr(spacing,'line'),rule=(attr(spacing,'lineRule')||'').toLowerCase();
-      if(before>=0)el.style.marginTop=(before/20)+'pt';
-      if(after>=0)el.style.marginBottom=(after/20)+'pt';
+      if(attr(spacing,'before')!==''&&before>=0)el.style.marginTop=(before/20)+'pt';
+      if(attr(spacing,'after')!==''&&after>=0)el.style.marginBottom=(after/20)+'pt';
       if(line>0){
         if(rule==='exact'||rule==='atleast')el.style.lineHeight=(line/20)+'pt';
         else el.style.lineHeight=(Math.round((line/240)*1000)/1000).toString();
       }
     }
+    var pBdr=one(prop,'pBdr');if(pBdr){['top','bottom','left','right'].forEach(function(side){var border=one(pBdr,side);if(!border)return;var type=attr(border,'val');if(type==='nil'||type==='none')el.style['border'+side.charAt(0).toUpperCase()+side.slice(1)]='none';else{var width=Math.max(.5,Math.min(8,(+attr(border,'sz')||6)/6)),c=attr(border,'color');el.style['border'+side.charAt(0).toUpperCase()+side.slice(1)]=width+'px solid '+(/^[a-f0-9]{6}$/i.test(c)?'#'+c:'#444444')}})}
     var ind=one(prop,'ind');
     var first=+attr(ind,'firstLine'),hanging=+attr(ind,'hanging');
     if(first>0)el.style.textIndent=Math.round(first/15)+'px';
@@ -331,8 +371,9 @@ async function writerReadDocx(file){
     if(!mime)return null;
     pics[relId]='data:'+mime+';base64,'+await f.async('base64');return pics[relId];
   }
-  async function run(node,parent){
-    var style=one(node,'rPr'),holder=document.createElement('span'),hasStyle=false;
+  async function run(node,parent,inherited){
+    var style=one(node,'rPr'),holder=document.createElement('span'),hasStyle=false,face=inherited||'';
+    var runFont=one(style,'rFonts');face=attr(runFont,'ascii')||attr(runFont,'hAnsi')||inheritedFont(val(style,'rStyle'))||face;
     if(style){
       function set(prop,value){holder.style[prop]=value;hasStyle=true}
       if(one(style,'b')&&val(style,'b')!=='0')set('fontWeight','bold');
@@ -341,17 +382,17 @@ async function writerReadDocx(file){
       if(one(style,'strike'))set('textDecoration','line-through');
       var color=val(style,'color');if(/^[0-9a-f]{6}$/i.test(color))set('color','#'+color);
       var sz=parseInt(val(style,'sz'),10);if(sz>=2&&sz<=400)set('fontSize',(sz/2)+'pt');
-      var ft=one(style,'rFonts');if(ft){var family=attr(ft,'ascii')||attr(ft,'hAnsi');if(family)set('fontFamily',family)}
+      var ft=one(style,'rFonts');if(ft){var family=attr(ft,'ascii')||attr(ft,'hAnsi');if(family){face=family;set('fontFamily',family)}}
       var shd=one(style,'shd'),bg=attr(shd,'fill')||val(style,'highlight');var colors={yellow:'#ffff00',green:'#00ff00',cyan:'#00ffff',magenta:'#ff00ff'};
       if(/^[0-9a-f]{6}$/i.test(bg))set('backgroundColor','#'+bg);else if(colors[bg])set('backgroundColor',colors[bg]);
       var va=val(style,'vertAlign');if(va==='superscript')set('verticalAlign','super');if(va==='subscript')set('verticalAlign','sub');
     }
     for(var c of node.children){
-      if(c.localName==='t'||c.localName==='delText'){holder.appendChild(document.createTextNode(c.textContent))}
+      if(c.localName==='t'||c.localName==='delText'){var content=c.textContent;if(/^wingdings\s*2$/i.test(face)){content=content.replace(/'/g,'☎').replace(/\(/g,'📞');holder.style.fontFamily='Arial, sans-serif'}else if(/^wingdings$/i.test(face)){content=content.replace(/\(/g,'☎');holder.style.fontFamily='Arial, sans-serif'}holder.appendChild(document.createTextNode(content))}
       else if(c.localName==='tab')holder.appendChild(document.createTextNode('\u00a0\u00a0\u00a0\u00a0'));
       else if(c.localName==='sym'){
         var symbol=decodeWordSymbol(attr(c,'font'),attr(c,'char'));
-        if(symbol&&typeof symbol==='string')holder.appendChild(document.createTextNode(symbol));
+        if(symbol&&typeof symbol==='string'){var glyph=document.createElement('span');glyph.style.fontFamily='Arial, sans-serif';glyph.textContent=symbol;holder.appendChild(glyph)}
         else if(symbol&&symbol.text){var sym=document.createElement('span');if(symbol.font)sym.style.fontFamily=symbol.font;sym.textContent=symbol.text;holder.appendChild(sym)}
       }
       else if(c.localName==='br'||c.localName==='cr')holder.appendChild(document.createElement('br'));
@@ -362,16 +403,16 @@ async function writerReadDocx(file){
     }
     if(holder.childNodes.length)parent.appendChild(holder);
   }
-  async function inline(node,parent){
-    if(node.localName==='r'){await run(node,parent);return}
+  async function inline(node,parent,inherited){
+    if(node.localName==='r'){await run(node,parent,inherited);return}
     if(node.localName==='hyperlink'){
       var link=rels[attr(node,'id')]||'';
       var element=/^(https?:\/\/|mailto:)/i.test(link)?document.createElement('a'):document.createElement('span');
       if(element.tagName==='A')element.href=link;
-      for(var c of node.children)await inline(c,element);
+      for(var c of node.children)await inline(c,element,inherited);
       parent.appendChild(element);return;
     }
-    for(var ch of node.children)await inline(ch,parent);
+    for(var ch of node.children)await inline(ch,parent,inherited);
   }
   async function paragraph(p){
     var prop=one(p,'pPr'),id=val(prop,'pStyle'),name=(styleNames[id]||id||'').toLowerCase(),tag='p';
@@ -386,8 +427,11 @@ async function writerReadDocx(file){
     if(align==='both'||align==='distribute')el.style.textAlign='justify';
     else if(['left','right','center'].includes(align))el.style.textAlign=align;
     var ind=one(prop,'ind'),left=+attr(ind,'left');if(left>0)el.style.marginLeft=Math.round(left/15)+'px';
+    applyParagraphSpacing(el,defaultPPr);
+    if(styleDefs[id]&&styleDefs[id].pPr)applyParagraphSpacing(el,styleDefs[id].pPr);
     applyParagraphSpacing(el,prop);
-    for(var ch of p.children)if(ch!==prop)await inline(ch,el);
+    var paraFont=attr(one(prop,'rPr')&&one(one(prop,'rPr'),'rFonts'),'ascii')||inheritedFont(id);
+    for(var ch of p.children)if(ch!==prop)await inline(ch,el,paraFont);
     if(!el.hasChildNodes())el.appendChild(document.createElement('br'));
     var num=one(prop,'numPr'),numId=val(num,'numId'),lvl=parseInt(val(num,'ilvl'),10)||0;
     var styleList=!numId&&/\blist\s+(?:bullet|number)/.test(name);
@@ -400,6 +444,7 @@ async function writerReadDocx(file){
       var row=tbl.insertRow();
       for(var tc of children(tr,'tc')){
         var cell=row.insertCell(),tcPr=one(tc,'tcPr'),sp=+val(tcPr,'gridSpan');if(sp>1)cell.colSpan=sp;
+        var tBorders=one(tcPr,'tcBorders');if(tBorders){['top','right','bottom','left'].forEach(function(side){var border=one(tBorders,side);if(!border)return;var style=attr(border,'val'),width=(+attr(border,'sz')||6)/6,color=attr(border,'color');cell.style['border'+side.charAt(0).toUpperCase()+side.slice(1)]=style==='none'||style==='nil'?'none':Math.max(.5,width)+'px solid '+(/^[a-f0-9]{6}$/i.test(color)?'#'+color:'#444444')})} 
         for(var child of tc.children){
           if(child.localName==='p'){cell.appendChild((await paragraph(child)).el)}
           else if(child.localName==='tbl')cell.appendChild(await table(child));
@@ -517,14 +562,37 @@ function writerBuildDocx(root, JSZip, opts){
     }
     for(var k=node.firstChild;k;k=k.nextSibling)inline(k,nf,out);
   }
+  function cssTwips(s){var m=String(s||'').match(/^([+-]?[\d.]+)(pt|px)$/);return m?Math.round(parseFloat(m[1])*(m[2]==='pt'?20:15)):null}
+  function borderTags(st){
+    if(!st)return '';
+    var bits='',any=false;
+    ['top','left','bottom','right'].forEach(function(side){
+      var k=side.charAt(0).toUpperCase()+side.slice(1),type=st['border'+k+'Style'];if(!type)return;
+      any=true;
+      if(type==='none'||type==='hidden'){bits+='<w:'+side+' w:val="nil"/>';return}
+      var width=st['border'+k+'Width'],w=parseFloat(width)||1;
+      var color=hex(st['border'+k+'Color'])||'444444';
+      bits+='<w:'+side+' w:val="single" w:sz="'+Math.max(2,Math.min(96,Math.round(w*6)))+'" w:space="1" w:color="'+color+'"/>';
+    });
+    return any?'<w:pBdr>'+bits+'</w:pBdr>':'';
+  }
   function para(runs,ctx){
     var p='';
     if(ctx.style)p+='<w:pStyle w:val="'+ctx.style+'"/>';
     if(ctx.num)p+='<w:numPr><w:ilvl w:val="'+ctx.num.lvl+'"/><w:numId w:val="'+ctx.num.id+'"/></w:numPr>';
     if(ctx.rule)p+='<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="808080"/></w:pBdr>';
-    if(ctx.tight)p+='<w:spacing w:after="0" w:line="240" w:lineRule="auto"/>';
-    else if(opts.line)p+='<w:spacing w:line="'+Math.round(Math.max(1,Math.min(3,parseFloat(opts.line)||1.08))*240)+'" w:lineRule="auto"/>';
-    if(ctx.ind)p+='<w:ind w:left="'+Math.round(ctx.ind)+'"/>';
+    else if(ctx.el)p+=borderTags(ctx.el.style);
+    var style=ctx.el&&ctx.el.style,spa='';
+    if(style&&style.marginTop)spa+=' w:before="'+Math.max(0,cssTwips(style.marginTop)||0)+'"';
+    if(style&&style.marginBottom)spa+=' w:after="'+Math.max(0,cssTwips(style.marginBottom)||0)+'"';
+    if(style&&style.lineHeight){
+      var line=style.lineHeight,twips=/^(\d+(?:\.\d+)?)$/.test(line)?Math.round(parseFloat(line)*240):cssTwips(line);
+      if(twips)spa+=' w:line="'+twips+'" w:lineRule="'+(/pt$|px$/.test(line)?'exact':'auto')+'"';
+    }
+    if(spa)p+='<w:spacing'+spa+'/>';
+    else if(ctx.tight)p+='<w:spacing w:after="0" w:line="240" w:lineRule="auto"/>';
+    else if(opts.line)p+='<w:spacing w:line="'+Math.round(Math.max(1,Math.min(6,parseFloat(opts.line)||1.15))*240)+'" w:lineRule="auto"/>';
+    if(ctx.ind||style&&style.textIndent)p+='<w:ind'+(ctx.ind?' w:left="'+Math.round(ctx.ind)+'"':'')+(style&&style.textIndent?' w:firstLine="'+(cssTwips(style.textIndent)||0)+'"':'')+'/>';
     if(ctx.jc)p+='<w:jc w:val="'+ctx.jc+'"/>';
     return '<w:p>'+(p?'<w:pPr>'+p+'</w:pPr>':'')+runs+'</w:p>';
   }
@@ -533,7 +601,7 @@ function writerBuildDocx(root, JSZip, opts){
     return a==='center'?'center':a==='right'?'right':a==='justify'?'both':a==='left'?'left':null;
   }
   function derive(ctx,el){
-    var n=merge(ctx,{}),t=el.tagName,j=jcOf(el);
+    var n=merge(ctx,{}),t=el.tagName,j=jcOf(el);n.el=el;
     if(j)n.jc=j;
     if(t==='H1')n.style='Heading1';
     else if(t==='H2')n.style='Heading2';
@@ -603,7 +671,8 @@ function writerBuildDocx(root, JSZip, opts){
         var o=[];blocks(c,merge(ctx,{tight:true,style:null,num:null,jc:null,ind:0}),o);
         if(!o.length||!/<w:p[ >]|<w:p>|<w:tbl>/.test(o.join('')))o.push('<w:p/>');
         if(/<\/w:tbl>$/.test(o[o.length-1]))o.push('<w:p/>');
-        x+='<w:tc><w:tcPr><w:tcW w:w="'+(w*span)+'" w:type="dxa"/>'+(span>1?'<w:gridSpan w:val="'+span+'"/>':'')+'</w:tcPr>'+o.join('')+'</w:tc>';
+        var cb=borderTags(c.style).replace(/w:pBdr/g,'w:tcBorders');
+        x+='<w:tc><w:tcPr><w:tcW w:w="'+(w*span)+'" w:type="dxa"/>'+(span>1?'<w:gridSpan w:val="'+span+'"/>':'')+cb+'</w:tcPr>'+o.join('')+'</w:tc>';
       });
       while(used<cols){x+='<w:tc><w:tcPr><w:tcW w:w="'+w+'" w:type="dxa"/></w:tcPr><w:p/></w:tc>';used++}
       x+='</w:tr>';
@@ -752,7 +821,9 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     printer:'<path d="M4 6V2h8v4"/><rect x="2" y="6" width="12" height="6" rx="1"/><path d="M4 10h8v4H4z"/>',
     moon:'<path d="M12.5 9.5A5.5 5.5 0 016.5 3.5a5.5 5.5 0 106 6z"/>',
     search:'<circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/>',
-    help:'<circle cx="8" cy="8" r="6"/><path d="M6.5 6a1.6 1.6 0 113 1c-.8.8-1.5 1-1.5 2.1M8 11.9v.3"/>'
+    help:'<circle cx="8" cy="8" r="6"/><path d="M6.5 6a1.6 1.6 0 113 1c-.8.8-1.5 1-1.5 2.1M8 11.9v.3"/>',
+    spacing:'<path d="M3 2v12M1 4l2-2 2 2M1 12l2 2 2-2M7 4h8M7 7h8M7 10h8M7 13h8"/>',
+    borders:'<rect x="2" y="2" width="12" height="12"/><path d="M8 2v12M2 8h12"/>'
   };
   document.querySelectorAll('[data-ic]').forEach(function(e){
     e.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">'+ICONS[e.dataset.ic]+'</svg>';
@@ -784,6 +855,83 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   document.addEventListener('selectionchange',function(){saveSel();state()});
   function cmd(c,v){restoreSel();document.execCommand(c,false,v||null);after()}
   function after(){saveSel();state();count();persist()}
+  /* Word-like line/paragraph spacing and borders (selected paragraphs or cells). */
+  var activePopup=null;
+  function closePopup(){
+    ['spacingmenu','bordersmenu'].forEach(function(id){$(id).classList.remove('open')});
+    ['spacingbtn','bordersbtn'].forEach(function(id){$(id).setAttribute('aria-expanded','false')});
+    activePopup=null;
+  }
+  function selectionBlocks(){
+    var range=saved;
+    if(!range||!page.contains(range.commonAncestorContainer))return [];
+    var tags='p,h1,h2,h3,h4,h5,h6,li,blockquote,pre,div';
+    var selected=[];
+    if(range.collapsed){
+      var el=range.startContainer.nodeType===1?range.startContainer:range.startContainer.parentElement;
+      while(el&&el!==page){if(el.matches&&el.matches(tags)){selected=[el];break}el=el.parentElement}
+      if(!selected.length&&el===page)selected=[page];
+    }else{
+      selected=Array.from(page.querySelectorAll(tags)).filter(function(el){
+        return !['UL','OL','TABLE'].includes(el.parentElement&&el.parentElement.tagName)&&range.intersectsNode(el) && !Array.from(el.children).some(function(c){return c.matches&&c.matches(tags)&&range.intersectsNode(c)});
+      });
+      if(!selected.length)selected=[page];
+    }
+    return Array.from(new Set(selected));
+  }
+  function selectionCells(){
+    var range=saved;if(!range||!page.contains(range.commonAncestorContainer))return [];
+    var cells=Array.from(page.querySelectorAll('td,th'));
+    if(range.collapsed){var el=range.startContainer.nodeType===1?range.startContainer:range.startContainer.parentElement;var c=el&&el.closest('td,th');return c?[c]:[]}
+    return cells.filter(function(c){return range.intersectsNode(c)});
+  }
+  function popupOpen(name,anchor){
+    if(activePopup===name){closePopup();return}
+    closePopup();saveSel();var panel=$(name);panel.classList.add('open');activePopup=name;
+    var rect=anchor.getBoundingClientRect(),h=panel.getBoundingClientRect().height,w=panel.getBoundingClientRect().width;
+    panel.style.left=Math.max(6,Math.min(rect.left,innerWidth-w-7))+'px';
+    panel.style.top=(rect.bottom+h>innerHeight-8&&rect.top>h?Math.max(6,rect.top-h-4):Math.min(innerHeight-h-6,rect.bottom+4))+'px';
+    anchor.setAttribute('aria-expanded','true');
+    if(name==='spacingmenu'){
+      var block=selectionBlocks()[0],cs=block?getComputedStyle(block):null;
+      var ln=block?(parseFloat(block.style.lineHeight)||parseFloat(cs.lineHeight)/parseFloat(cs.fontSize)||parseFloat(page.style.lineHeight)||1.15):1.15;
+      $('customline').value=Math.max(0.5,Math.min(6,ln)).toFixed(2).replace(/0+$/,'').replace(/\.$/,'');
+      var before=cs?parseFloat(cs.marginTop)*.75:0,after=cs?parseFloat(cs.marginBottom)*.75:8;
+      $('beforept').value=Math.round(before*10)/10||0;$('afterpt').value=Math.round(after*10)/10||0;
+      $('spacebefore').textContent=before>0.5?'Remove Space Before Paragraph':'Add Space Before Paragraph';
+      $('spaceafter').textContent=after>0.5?'Remove Space After Paragraph':'Add Space After Paragraph';
+      panel.querySelectorAll('[data-line]').forEach(function(b){b.classList.toggle('on',Math.abs(ln-parseFloat(b.dataset.line))<.015)});
+    }
+  }
+  $('spacingbtn').addEventListener('click',function(){popupOpen('spacingmenu',this)});
+  $('bordersbtn').addEventListener('click',function(){popupOpen('bordersmenu',this)});
+  document.addEventListener('pointerdown',function(e){
+    if(activePopup&&!$(activePopup).contains(e.target)&&e.target!==$('spacingbtn')&&e.target!==$('bordersbtn'))closePopup();
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closePopup()});
+  function changeParagraphs(f){var blocks=selectionBlocks();if(!blocks.length){say('Place the cursor inside a paragraph.');return}blocks.forEach(f);after();closePopup()}
+  $('spacingmenu').querySelectorAll('[data-line]').forEach(function(button){button.addEventListener('click',function(){var n=parseFloat(this.dataset.line);changeParagraphs(function(el){el.style.lineHeight=String(n)})})});
+  $('spacebefore').addEventListener('click',function(){var block=selectionBlocks()[0],v=block?parseFloat(getComputedStyle(block).marginTop):0;changeParagraphs(function(el){el.style.marginTop=v>.6?'0pt':'8pt'})});
+  $('spaceafter').addEventListener('click',function(){var block=selectionBlocks()[0],v=block?parseFloat(getComputedStyle(block).marginBottom):0;changeParagraphs(function(el){el.style.marginBottom=v>.6?'0pt':'8pt'})});
+  $('nospacing').addEventListener('click',function(){changeParagraphs(function(el){el.style.lineHeight='1';el.style.marginTop='0pt';el.style.marginBottom='0pt'})});
+  $('applyspacing').addEventListener('click',function(){
+    var line=Math.max(.5,Math.min(6,parseFloat($('customline').value)||1.15)),before=Math.max(0,Math.min(144,parseFloat($('beforept').value)||0)),after=Math.max(0,Math.min(144,parseFloat($('afterpt').value)||0));
+    changeParagraphs(function(el){el.style.lineHeight=String(line);el.style.marginTop=before+'pt';el.style.marginBottom=after+'pt'});
+  });
+  function applyBorders(which){
+    var targets=selectionCells();if(!targets.length)targets=selectionBlocks();
+    if(!targets.length){say('Select a paragraph or table cell first.');return}
+    var thick=$('borderwidth').value+'px solid '+$('bordercolor').value;
+    var all=['Top','Bottom','Left','Right'];
+    targets.forEach(function(el,i){
+      var sides=which==='none'?[]:which==='all'?all:which==='outside'?['Left','Right'].concat(i===0?['Top']:[]).concat(i===targets.length-1?['Bottom']:[]):[which.charAt(0).toUpperCase()+which.slice(1)];
+      all.forEach(function(side){
+        if(which==='none'||which==='outside'||which==='all')el.style['border'+side]=sides.includes(side)?thick:'none';
+        else if(sides.includes(side))el.style['border'+side]=thick;
+      });
+    });after();closePopup();
+  }
+  $('bordersmenu').querySelectorAll('[data-border]').forEach(function(b){b.addEventListener('click',function(){applyBorders(this.dataset.border)})});
 
   document.querySelectorAll('#ribbon button').forEach(function(b){b.addEventListener('mousedown',function(e){e.preventDefault()})});
   document.querySelectorAll('button[data-cmd]').forEach(function(b){b.addEventListener('click',function(){cmd(b.dataset.cmd)})});
@@ -791,6 +939,11 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     b.addEventListener('click',function(){restoreSel();var v=b.dataset.blk;document.execCommand('formatBlock',false,v==='p'?'<p>':'<'+v+'>');after()});
   });
   var fontSelect=$('font');
+  var officeGroup=fontSelect.querySelector('optgroup');
+  ['Wingdings','Wingdings 2','Wingdings 3','Webdings','Symbol'].forEach(function(name){
+    if(Array.from(fontSelect.options).some(function(o){return o.value===name}))return;
+    var opt=document.createElement('option');opt.value=name;opt.textContent=name;officeGroup.appendChild(opt);
+  });
   function previewFont(){
     var face=fontSelect.value.replace(/[\\\"']/g,'');
     fontSelect.style.fontFamily='"'+face+'", Arial, sans-serif';
