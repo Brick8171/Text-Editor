@@ -197,7 +197,7 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
   <!-- LAYOUT -->
   <div class="panel" id="p-layout">
     <div class="grp"><div class="body"><div class="row"><span style="min-width:58px">Paper</span><select id="papersize" title="Paper size"><option value="a4">A4</option><option value="letter">US Letter</option><option value="legal">US Legal</option></select></div><div class="row"><span style="min-width:58px">Orientation</span><select id="orientation" title="Page orientation"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></div></div><div class="lbl">Page setup</div></div>
-    <div class="grp"><div class="body"><div class="row"><span style="min-width:58px">Margins</span><select id="margins" title="Document margins"><option value="normal">Normal (1 in)</option><option value="moderate">Moderate (0.75 in)</option><option value="narrow">Narrow (0.5 in)</option></select></div><div class="row"><span style="min-width:58px">Spacing</span><select id="linespacing" title="Line spacing"><option value="1">Single</option><option value="1.15">1.15</option><option value="1.5">1.5</option><option value="2">Double</option></select></div></div><div class="lbl">Paragraph</div></div>
+    <div class="grp"><div class="body"><div class="row"><span style="min-width:58px">Margins</span><select id="margins" title="Document margins"><option value="normal">Normal (1 in)</option><option value="moderate">Moderate (0.75 in)</option><option value="narrow">Narrow (0.5 in)</option></select></div><div class="row"><span style="min-width:58px">Spacing</span><select id="linespacing" title="Line spacing"><option value="1">Single</option><option value="1.15" selected>1.15</option><option value="1.5">1.5</option><option value="2">Double</option></select></div></div><div class="lbl">Paragraph</div></div>
   </div>
   <!-- VIEW -->
   <div class="panel" id="p-view">
@@ -293,6 +293,34 @@ async function writerReadDocx(file){
   }
   var styleNames={};var se=zip.file('word/styles.xml');
   if(se){var sd=xml(await se.async('string'));for(var st of descendants(sd,'style')){var id=attr(st,'styleId'),nm=val(st,'name');if(id)styleNames[id]=nm||id}}
+  function decodeWordSymbol(font,charHex){
+    var hex=String(charHex||'').replace(/[^0-9a-f]/ig,'').toUpperCase();if(!hex)return '';
+    var fontName=(font||'').trim(),family=fontName.toLowerCase(),num=parseInt(hex,16),low=('0'+(num&255).toString(16)).slice(-2).toUpperCase();
+    var common={
+      wingdings:{'28':'☎','29':'✆','FC':'✔','FB':'✗','A8':'●','6C':'✉','3D':'☜','3E':'☞'},
+      wingdings2:{'28':'☎','29':'✆','54':'☑','52':'☒','A3':'➜'},
+      webdings:{'28':'☎','3D':'✉','3E':'🖂'}
+    };
+    if(common[family]&&common[family][low])return common[family][low];
+    if(!/wingdings|webdings|symbol/.test(family)&&num>=32&&num<=0x10ffff){try{return String.fromCodePoint(num)}catch(e){}}
+    return {font:fontName||'Wingdings',text:String.fromCharCode(num&255)};
+  }
+  function applyParagraphSpacing(el,prop){
+    if(!prop)return;
+    var spacing=one(prop,'spacing');if(spacing){
+      var before=+attr(spacing,'before'),after=+attr(spacing,'after'),line=+attr(spacing,'line'),rule=(attr(spacing,'lineRule')||'').toLowerCase();
+      if(before>=0)el.style.marginTop=(before/20)+'pt';
+      if(after>=0)el.style.marginBottom=(after/20)+'pt';
+      if(line>0){
+        if(rule==='exact'||rule==='atleast')el.style.lineHeight=(line/20)+'pt';
+        else el.style.lineHeight=(Math.round((line/240)*1000)/1000).toString();
+      }
+    }
+    var ind=one(prop,'ind');
+    var first=+attr(ind,'firstLine'),hanging=+attr(ind,'hanging');
+    if(first>0)el.style.textIndent=Math.round(first/15)+'px';
+    else if(hanging>0)el.style.textIndent='-'+Math.round(hanging/15)+'px';
+  }
   var pics={};async function getImage(relId){
     if(pics[relId]!==undefined)return pics[relId];
     var target=rels[relId];if(!target||/^([a-z]+:|\/\/)/i.test(target))return null;
@@ -321,6 +349,11 @@ async function writerReadDocx(file){
     for(var c of node.children){
       if(c.localName==='t'||c.localName==='delText'){holder.appendChild(document.createTextNode(c.textContent))}
       else if(c.localName==='tab')holder.appendChild(document.createTextNode('\u00a0\u00a0\u00a0\u00a0'));
+      else if(c.localName==='sym'){
+        var symbol=decodeWordSymbol(attr(c,'font'),attr(c,'char'));
+        if(symbol&&typeof symbol==='string')holder.appendChild(document.createTextNode(symbol));
+        else if(symbol&&symbol.text){var sym=document.createElement('span');if(symbol.font)sym.style.fontFamily=symbol.font;sym.textContent=symbol.text;holder.appendChild(sym)}
+      }
       else if(c.localName==='br'||c.localName==='cr')holder.appendChild(document.createElement('br'));
       else if(c.localName==='drawing'||c.localName==='pict'){
         var blip=descendants(c,'blip')[0];var id=attr(blip,'embed');if(!id&&blip)id=blip.getAttribute('r:embed');
@@ -353,6 +386,7 @@ async function writerReadDocx(file){
     if(align==='both'||align==='distribute')el.style.textAlign='justify';
     else if(['left','right','center'].includes(align))el.style.textAlign=align;
     var ind=one(prop,'ind'),left=+attr(ind,'left');if(left>0)el.style.marginLeft=Math.round(left/15)+'px';
+    applyParagraphSpacing(el,prop);
     for(var ch of p.children)if(ch!==prop)await inline(ch,el);
     if(!el.hasChildNodes())el.appendChild(document.createElement('br'));
     var num=one(prop,'numPr'),numId=val(num,'numId'),lvl=parseInt(val(num,'ilvl'),10)||0;
@@ -640,7 +674,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
 (function(){
   var $=function(i){return document.getElementById(i)};
   var page=$('page'),wrap=$('wrap'),sc=$('scroll'),saved=null,KEY='writer-doc-v2',userZoom=null,curZoom=1;
-  var pageLayout={paper:'a4',orientation:'portrait',margins:'normal',line:'1.08',custom:null};
+  var pageLayout={paper:'a4',orientation:'portrait',margins:'normal',line:'1.15',custom:null};
   var PAPER={a4:{w:11906,h:16838,label:'A4'},letter:{w:12240,h:15840,label:'letter'},legal:{w:12240,h:20160,label:'legal'}};
   var MARGINS={normal:1440,moderate:1080,narrow:720};
   // Chromium 131+ supports page-margin boxes. Blank them so we can keep
@@ -902,7 +936,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   $('nyes').addEventListener('click',function(){$('notice').style.display='none';var f=pend;pend=null;if(f)f()});
   $('nno').addEventListener('click',function(){$('notice').style.display='none';pend=null});
   function isEmpty(){return page.innerText.trim().length===0&&!page.querySelector('img,table')}
-  function newDoc(){page.innerHTML='<p><br></p>';$('docname').value='Document1';pageLayout={paper:'a4',orientation:'portrait',margins:'normal',line:'1.08',custom:null};applyLayout();saved=null;after();page.focus()}
+  function newDoc(){page.innerHTML='<p><br></p>';$('docname').value='Document1';pageLayout={paper:'a4',orientation:'portrait',margins:'normal',line:'1.15',custom:null};applyLayout();saved=null;after();page.focus()}
   $('newdoc').addEventListener('click',function(){if(isEmpty())newDoc();else ask('Start a new document? The current text will be cleared.',newDoc,'New document')});
   $('print').addEventListener('click',function(){window.print()});
 
