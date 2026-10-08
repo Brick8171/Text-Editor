@@ -301,7 +301,7 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="img"><span data-ic="image"></span>Picture</button></div></div><div class="lbl">Illustrations</div></div>
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="lnk"><span data-ic="link"></span>Link</button></div></div><div class="lbl">Links</div></div>
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="insertdate" title="Insert the current date or an automatically updating date"><span data-ic="calendar"></span>Date &amp; Time</button></div></div><div class="lbl">Text</div></div>
-    <div class="grp" style="border-right:0"><div class="body"><div class="bigrow"><button class="big" id="hr"><span data-ic="pagebreak"></span>Page break</button></div></div><div class="lbl">Pages</div></div>
+    <div class="grp" style="border-right:0"><div class="body"><div class="bigrow"><button class="big" id="hr" title="Insert page break (Ctrl / Cmd + Enter)"><span data-ic="pagebreak"></span>Page break</button></div></div><div class="lbl">Pages</div></div>
   </div>
   <!-- LAYOUT -->
   <div class="panel" id="p-layout">
@@ -395,7 +395,7 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
   <div class="date-preview"><span>Preview</span><strong id="date-preview"></strong></div>
   <div class="date-actions"><button id="date-cancel" type="button">Cancel</button><button id="date-insert" type="button">Insert</button></div>
 </dialog>
-<dialog id="help-dialog"><h2>Writer keyboard shortcuts</h2><p><kbd>Ctrl / Cmd + S</kbd> Download .docx<br><kbd>Ctrl / Cmd + B</kbd> Bold<br><kbd>Ctrl / Cmd + I</kbd> Italic<br><kbd>Ctrl / Cmd + U</kbd> Underline<br><kbd>Ctrl / Cmd + Z</kbd> Undo<br><kbd>Ctrl / Cmd + Y</kbd> Redo<br><kbd>Ctrl / Cmd + F</kbd> Find<br><kbd>Ctrl / Cmd + H</kbd> Find and replace<br><kbd>Ctrl / Cmd + K</kbd> Insert link</p><p>Files are saved locally in this browser, with offline Word export and import. Complex Word layouts may be simplified.</p><button id="closehelp">Close</button></dialog>
+<dialog id="help-dialog"><h2>Writer keyboard shortcuts</h2><p><kbd>Ctrl / Cmd + S</kbd> Download .docx<br><kbd>Ctrl / Cmd + B</kbd> Bold<br><kbd>Ctrl / Cmd + I</kbd> Italic<br><kbd>Ctrl / Cmd + U</kbd> Underline<br><kbd>Ctrl / Cmd + Z</kbd> Undo<br><kbd>Ctrl / Cmd + Y</kbd> Redo<br><kbd>Ctrl / Cmd + F</kbd> Find<br><kbd>Ctrl / Cmd + H</kbd> Find and replace<br><kbd>Ctrl / Cmd + K</kbd> Insert link<br><kbd>Ctrl / Cmd + Enter</kbd> New page (page break)</p><p>Files are saved locally in this browser, with offline Word export and import. Complex Word layouts may be simplified.</p><button id="closehelp">Close</button></dialog>
 <script>/*!
 
 JSZip v3.10.1 - A JavaScript class for generating and reading zip files
@@ -1769,6 +1769,44 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   $('hcolor').addEventListener('change',function(){cmd('hiliteColor',this.value)});
 
   function html(h){restoreSel();document.execCommand('insertHTML',false,h);after()}
+  // A real page break, shared by Insert > Page break and Ctrl/Cmd + Enter.
+  // Place the caret in the newly inserted paragraph rather than beside the
+  // break; the paginator then moves that paragraph onto the following sheet.
+  function insertPageBreak(){
+    restoreSel();
+    var selection=getSelection();
+    if(!selection.rangeCount||!page.contains(selection.anchorNode)){
+      var last=sheetNodes().at(-1)||page,lastBlock=last.lastElementChild;
+      var end=document.createRange();
+      if(lastBlock){end.selectNodeContents(lastBlock);end.collapse(false)}
+      else{end.selectNodeContents(last);end.collapse(false)}
+      selection.removeAllRanges();selection.addRange(end);
+    }
+    // In the middle of a paragraph Word continues the remaining text on
+    // the new page, rather than inserting an extra blank line above it.
+    var trailingText=false,activeRange=selection.getRangeAt(0).cloneRange();
+    var anchor=activeRange.endContainer.nodeType===1?activeRange.endContainer:activeRange.endContainer.parentElement;
+    var block=anchor&&anchor.closest('p,h1,h2,h3,h4,h5,h6,blockquote,li,pre');
+    if(block&&page.contains(block)){
+      var trailingRange=activeRange.cloneRange();trailingRange.collapse(false);
+      try{trailingRange.setEnd(block,block.childNodes.length);trailingText=!!trailingRange.toString().trim()}catch(e){}
+    }
+    document.execCommand('insertHTML',false,'<hr class="pb"><p data-writer-pagebreak-target="1"><br></p>');
+    var target=page.querySelector('[data-writer-pagebreak-target="1"]');
+    if(target){
+      target.removeAttribute('data-writer-pagebreak-target');
+      if(trailingText&&target.nextElementSibling&&/^(P|H1|H2|H3|H4|H5|H6|BLOCKQUOTE|DIV)$/.test(target.nextElementSibling.tagName)){
+        var following=target.nextElementSibling;
+        if(following.textContent.trim()){target.remove();target=following}
+      }
+      var range=document.createRange();range.selectNodeContents(target);range.collapse(true);
+      page.focus({preventScroll:true});selection.removeAllRanges();selection.addRange(range);
+      saved=range.cloneRange();
+    }
+    after();
+    // A new explicit break needs an immediate reflow even on short pages.
+    schedulePaginate(true);
+  }
   function refreshDateFields(){
     var changed=false;
     page.querySelectorAll('span[data-writer-date="live"]').forEach(function(el){
@@ -1814,7 +1852,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     var r='<tr>'+'<td><br></td>'.repeat(nc)+'</tr>';
     html('<table>'+r.repeat(nr)+'</table><p><br></p>');
   });
-  $('hr').addEventListener('click',function(){html('<hr class="pb"><p><br></p>')});
+  $('hr').addEventListener('click',insertPageBreak);
   $('img').addEventListener('click',function(){saveSel();$('file').click()});
   $('file').addEventListener('change',function(){
     var f=this.files[0];if(!f)return;var r=new FileReader();
@@ -2055,6 +2093,9 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   sc.addEventListener('scroll',count);
   $('docname').addEventListener('input',persist);
   page.addEventListener('keydown',function(e){
+    if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey){
+      e.preventDefault();e.stopPropagation();insertPageBreak();return;
+    }
     if(e.key==='Tab'){e.preventDefault();var c=cell();if(c){var n=c.nextElementSibling||(c.parentNode.nextElementSibling&&c.parentNode.nextElementSibling.cells[0]);if(n){var r=document.createRange();r.selectNodeContents(n);var s=getSelection();s.removeAllRanges();s.addRange(r)}}else document.execCommand('insertHTML',false,'&emsp;')}
   });
   page.addEventListener('paste',function(e){
