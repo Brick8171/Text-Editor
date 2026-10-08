@@ -397,6 +397,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 <script>
 /* Portable DOCX import and safety helpers. No network access required. */
 /* Word-compatible date formats shared by the editor and DOCX reader/writer. */
+var WRITER_WORD_LINE_SCALE=1.16;
 var WRITER_DATE_FORMATS={
   'de-short':{docx:'dd.MM.yyyy',locale:'de-AT',opts:{day:'2-digit',month:'2-digit',year:'numeric'}},
   'de-long':{docx:'d. MMMM yyyy',locale:'de-AT',opts:{day:'numeric',month:'long',year:'numeric'}},
@@ -467,6 +468,10 @@ function writerSanitizeHtml(source) {
       if(['through','none','square','tight','topBottom'].includes(wrap))el.setAttribute('data-writer-anchor-wrap',wrap);
       if(node.getAttribute('data-writer-signature')==='1')el.setAttribute('data-writer-signature','1');
     }
+    if(['p','div','h1','h2','h3','h4','h5','h6','blockquote'].includes(tag)){
+      var wordLine=node.getAttribute('data-writer-word-line');
+      if(/^\d{2,4}$/.test(wordLine||'')&&+wordLine>=120&&+wordLine<=1440)el.setAttribute('data-writer-word-line',wordLine);
+    }
     if(tag==='p'&&node.getAttribute('data-writer-clear-floating')==='1')el.setAttribute('data-writer-clear-floating','1');
     if(tag==='p'&&node.getAttribute('data-writer-keep-with-next')==='1')el.setAttribute('data-writer-keep-with-next','1');
     if(tag==='hr'&&node.classList.contains('pb'))el.className='pb';
@@ -498,10 +503,26 @@ async function writerReadDocx(file){
     for(var abstr of descendants(nd,'abstractNum')){var fm=val(one(abstr,'lvl'),'numFmt');numberStyles[attr(abstr,'abstractNumId')]=fm||'bullet'}
     for(var n of descendants(nd,'num'))numbered[attr(n,'numId')]=numberStyles[val(n,'abstractNumId')]||'bullet';
   }
-  var styleNames={},styleDefs={},defaultPPr=null;var se=zip.file('word/styles.xml');
-  if(se){var sd=xml(await se.async('string'));defaultPPr=one(one(one(sd.documentElement,'docDefaults'),'pPrDefault'),'pPr');
+  // Preserve the actual default typeface stored in a DOCX theme. Word uses
+  // theme slots such as minorHAnsi for Aptos, not necessarily explicit rFonts.
+  var themeFonts={};var themePart=zip.file('word/theme/theme1.xml');
+  if(themePart){try{
+    var theme=xml(await themePart.async('string'));
+    var minor=descendants(theme,'minorFont')[0],major=descendants(theme,'majorFont')[0];
+    var latinMinor=one(minor,'latin'),latinMajor=one(major,'latin');
+    themeFonts.minor=latinMinor&&latinMinor.getAttribute('typeface')||'';
+    themeFonts.major=latinMajor&&latinMajor.getAttribute('typeface')||'';
+  }catch(e){}}
+  function wordFontAttrs(node){
+    if(!node)return '';
+    var explicit=attr(node,'ascii')||attr(node,'hAnsi');if(explicit)return explicit;
+    var slot=(attr(node,'asciiTheme')||attr(node,'hAnsiTheme')||'').toLowerCase();
+    return themeFonts[slot.indexOf('major')>=0?'major':'minor']||'';
+  }
+  var styleNames={},styleDefs={},defaultPPr=null,defaultDocFont='Calibri';var se=zip.file('word/styles.xml');
+  if(se){var sd=xml(await se.async('string'));defaultPPr=one(one(one(sd.documentElement,'docDefaults'),'pPrDefault'),'pPr');defaultDocFont=wordFontAttrs(one(one(one(sd.documentElement,'docDefaults'),'rPrDefault'),'rPr')&&one(one(one(one(sd.documentElement,'docDefaults'),'rPrDefault'),'rPr'),'rFonts'))||themeFonts.minor||'Calibri';
     for(var st of descendants(sd,'style')){
-      var id=attr(st,'styleId'),nm=val(st,'name');if(id){styleNames[id]=nm||id;styleDefs[id]={font:attr(one(one(st,'rPr'),'rFonts'),'ascii')||attr(one(one(st,'rPr'),'rFonts'),'hAnsi'),basedOn:val(st,'basedOn'),pPr:one(st,'pPr')};}
+      var id=attr(st,'styleId'),nm=val(st,'name');if(id){styleNames[id]=nm||id;styleDefs[id]={font:wordFontAttrs(one(one(st,'rPr'),'rFonts')),basedOn:val(st,'basedOn'),pPr:one(st,'pPr')};}
     }
   }
   function inheritedFont(id){for(var i=0;i<8&&id;i++){var rule=styleDefs[id];if(!rule)break;if(rule.font)return rule.font;id=rule.basedOn}return ''}
@@ -525,8 +546,17 @@ async function writerReadDocx(file){
       if(attr(spacing,'before')!==''&&before>=0)el.style.marginTop=(before/20)+'pt';
       if(attr(spacing,'after')!==''&&after>=0)el.style.marginBottom=(after/20)+'pt';
       if(line>0){
-        if(rule==='exact'||rule==='atleast')el.style.lineHeight=(line/20)+'pt';
-        else el.style.lineHeight=(Math.round((line/240)*1000)/1000).toString();
+        if(rule==='exact'||rule==='atleast'){
+          el.removeAttribute('data-writer-word-line');
+          el.style.lineHeight=(line/20)+'pt';
+        }else{
+          // The baseline-to-baseline distance in Word is based on its font
+          // ascent/descent metrics. A CSS line-height of 1.15 is visibly too
+          // short for the same Word 1.15 setting, especially on empty lines.
+          // Keep the exact OOXML value for lossless re-export.
+          el.setAttribute('data-writer-word-line',String(line));
+          el.style.lineHeight=(Math.round((line/240)*WRITER_WORD_LINE_SCALE*10000)/10000).toString();
+        }
       }
     }
     var pBdr=one(prop,'pBdr');if(pBdr){['top','bottom','left','right'].forEach(function(side){var border=one(pBdr,side);if(!border)return;var type=attr(border,'val');if(type==='nil'||type==='none')el.style['border'+side.charAt(0).toUpperCase()+side.slice(1)]='none';else{var width=Math.max(.5,Math.min(8,(+attr(border,'sz')||6)/6)),c=attr(border,'color');el.style['border'+side.charAt(0).toUpperCase()+side.slice(1)]=width+'px solid '+(/^[a-f0-9]{6}$/i.test(c)?'#'+c:'#444444')}})}
@@ -547,7 +577,7 @@ async function writerReadDocx(file){
   }
   async function run(node,parent,inherited){
     var style=one(node,'rPr'),holder=document.createElement('span'),hasStyle=false,face=inherited||'';
-    var runFont=one(style,'rFonts');face=attr(runFont,'ascii')||attr(runFont,'hAnsi')||inheritedFont(val(style,'rStyle'))||face;
+    var runFont=one(style,'rFonts');face=wordFontAttrs(runFont)||inheritedFont(val(style,'rStyle'))||face;
     if(style){
       function set(prop,value){holder.style[prop]=value;hasStyle=true}
       if(one(style,'b')&&val(style,'b')!=='0')set('fontWeight','bold');
@@ -556,7 +586,7 @@ async function writerReadDocx(file){
       if(one(style,'strike'))set('textDecoration','line-through');
       var color=val(style,'color');if(/^[0-9a-f]{6}$/i.test(color))set('color','#'+color);
       var sz=parseInt(val(style,'sz'),10);if(sz>=2&&sz<=400)set('fontSize',(sz/2)+'pt');
-      var ft=one(style,'rFonts');if(ft){var family=attr(ft,'ascii')||attr(ft,'hAnsi');if(family){face=family;set('fontFamily',family)}}
+      var ft=one(style,'rFonts');if(ft){var family=wordFontAttrs(ft);if(family){face=family;set('fontFamily','"'+family.replace(/"/g,'')+'", Carlito, Arial, sans-serif')}}
       var shd=one(style,'shd'),bg=attr(shd,'fill')||val(style,'highlight');var colors={yellow:'#ffff00',green:'#00ff00',cyan:'#00ffff',magenta:'#ff00ff'};
       if(/^[0-9a-f]{6}$/i.test(bg))set('backgroundColor','#'+bg);else if(colors[bg])set('backgroundColor',colors[bg]);
       var va=val(style,'vertAlign');if(va==='superscript')set('verticalAlign','super');if(va==='subscript')set('verticalAlign','sub');
@@ -695,13 +725,17 @@ async function writerReadDocx(file){
       var hr=document.createElement('hr');hr.className='pb';return {el:hr,listId:'',type:'',level:0};
     }
     var el=document.createElement(tag),align=val(prop,'jc');
+    // If no run specifies a face, its glyphs still inherit the theme font.
+    // This matters for both browser line wrapping and OOXML export.
+    var effectiveFace=inheritedFont(id)||defaultDocFont;
+    if(effectiveFace)el.style.fontFamily='"'+effectiveFace.replace(/"/g,'')+'", Carlito, Arial, sans-serif';
     if(align==='both'||align==='distribute')el.style.textAlign='justify';
     else if(['left','right','center'].includes(align))el.style.textAlign=align;
     var ind=one(prop,'ind'),left=+attr(ind,'left');if(left>0)el.style.marginLeft=Math.round(left/15)+'px';
     applyParagraphSpacing(el,defaultPPr);
     if(styleDefs[id]&&styleDefs[id].pPr)applyParagraphSpacing(el,styleDefs[id].pPr);
     applyParagraphSpacing(el,prop);
-    var paraFont=attr(one(prop,'rPr')&&one(one(prop,'rPr'),'rFonts'),'ascii')||inheritedFont(id);
+    var paraFont=wordFontAttrs(one(prop,'rPr')&&one(one(prop,'rPr'),'rFonts'))||inheritedFont(id)||defaultDocFont;
     for(var ch of p.children)if(ch!==prop)await inline(ch,el,paraFont);
     if(!el.hasChildNodes())el.appendChild(document.createElement('br'));
     var num=one(prop,'numPr'),numId=val(num,'numId'),lvl=parseInt(val(num,'ilvl'),10)||0;
@@ -925,7 +959,9 @@ function writerBuildDocx(root, JSZip, opts){
     var style=ctx.el&&ctx.el.style,spa='';
     if(style&&style.marginTop)spa+=' w:before="'+Math.max(0,cssTwips(style.marginTop)||0)+'"';
     if(style&&style.marginBottom)spa+=' w:after="'+Math.max(0,cssTwips(style.marginBottom)||0)+'"';
-    if(style&&style.lineHeight){
+    var originalLine=ctx.el&&ctx.el.getAttribute('data-writer-word-line');
+    if(originalLine&&/^\d{2,4}$/.test(originalLine))spa+=' w:line="'+originalLine+'" w:lineRule="auto"';
+    else if(style&&style.lineHeight){
       var line=style.lineHeight,twips=/^(\d+(?:\.\d+)?)$/.test(line)?Math.round(parseFloat(line)*240):cssTwips(line);
       if(twips)spa+=' w:line="'+twips+'" w:lineRule="'+(/pt$|px$/.test(line)?'exact':'auto')+'"';
     }
@@ -941,7 +977,7 @@ function writerBuildDocx(root, JSZip, opts){
     return a==='center'?'center':a==='right'?'right':a==='justify'?'both':a==='left'?'left':null;
   }
   function derive(ctx,el){
-    var n=merge(ctx,{}),t=el.tagName,j=jcOf(el);n.el=el;
+    var n=merge(ctx,{}),t=el.tagName,j=jcOf(el);n.el=el;n.f=elFmt(el,n.f||{});
     if(j)n.jc=j;
     if(t==='H1')n.style='Heading1';
     else if(t==='H2')n.style='Heading2';
@@ -1120,7 +1156,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     document.documentElement.style.setProperty('--paper-height',height+'px');
     document.documentElement.style.setProperty('--paper-margin',margin+'px');
     for(var side of ['top','right','bottom','left'])document.documentElement.style.setProperty('--paper-'+side,((l[side]||l.margin)/15)+'px');
-    page.style.lineHeight=pageLayout.line;
+    page.style.lineHeight=(parseFloat(pageLayout.line)||1.15)*WRITER_WORD_LINE_SCALE;
     $('ruler').style.background='linear-gradient(90deg,#c7c7c7 '+margin+'px,#fff '+margin+'px,#fff '+(width-margin)+'px,#c7c7c7 '+(width-margin)+'px)';
     $('ruler').querySelectorAll('span').forEach(function(e,i){e.style.left=(margin+96*(i+1))+'px';e.style.display=margin+96*(i+1)>width-margin?'none':''});
     $('papersize').value=pageLayout.paper;
@@ -1448,7 +1484,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     anchor.setAttribute('aria-expanded','true');
     if(name==='spacingmenu'){
       var block=selectionBlocks()[0],cs=block?getComputedStyle(block):null;
-      var ln=block?(parseFloat(block.style.lineHeight)||parseFloat(cs.lineHeight)/parseFloat(cs.fontSize)||parseFloat(page.style.lineHeight)||1.15):1.15;
+      var ln=block?(+(block.getAttribute('data-writer-word-line')||0)/240||parseFloat(block.style.lineHeight)||parseFloat(cs.lineHeight)/parseFloat(cs.fontSize)||parseFloat(pageLayout.line)||1.15):1.15;
       $('customline').value=Math.max(0.5,Math.min(6,ln)).toFixed(2).replace(/0+$/,'').replace(/\.$/,'');
       var before=cs?parseFloat(cs.marginTop)*.75:0,after=cs?parseFloat(cs.marginBottom)*.75:8;
       $('beforept').value=Math.round(before*10)/10||0;$('afterpt').value=Math.round(after*10)/10||0;
@@ -1464,13 +1500,14 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   });
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closePopup()});
   function changeParagraphs(f){var blocks=selectionBlocks();if(!blocks.length){say('Place the cursor inside a paragraph.');return}blocks.forEach(f);after();closePopup()}
-  $('spacingmenu').querySelectorAll('[data-line]').forEach(function(button){button.addEventListener('click',function(){var n=parseFloat(this.dataset.line);changeParagraphs(function(el){el.style.lineHeight=String(n)})})});
+  function applyWordLine(el,n){el.setAttribute('data-writer-word-line',String(Math.round(n*240)));el.style.lineHeight=String(Math.round(n*WRITER_WORD_LINE_SCALE*10000)/10000)}
+  $('spacingmenu').querySelectorAll('[data-line]').forEach(function(button){button.addEventListener('click',function(){var n=parseFloat(this.dataset.line);changeParagraphs(function(el){applyWordLine(el,n)})})});
   $('spacebefore').addEventListener('click',function(){var block=selectionBlocks()[0],v=block?parseFloat(getComputedStyle(block).marginTop):0;changeParagraphs(function(el){el.style.marginTop=v>.6?'0pt':'8pt'})});
   $('spaceafter').addEventListener('click',function(){var block=selectionBlocks()[0],v=block?parseFloat(getComputedStyle(block).marginBottom):0;changeParagraphs(function(el){el.style.marginBottom=v>.6?'0pt':'8pt'})});
-  $('nospacing').addEventListener('click',function(){changeParagraphs(function(el){el.style.lineHeight='1';el.style.marginTop='0pt';el.style.marginBottom='0pt'})});
+  $('nospacing').addEventListener('click',function(){changeParagraphs(function(el){applyWordLine(el,1);el.style.marginTop='0pt';el.style.marginBottom='0pt'})});
   $('applyspacing').addEventListener('click',function(){
     var line=Math.max(.5,Math.min(6,parseFloat($('customline').value)||1.15)),before=Math.max(0,Math.min(144,parseFloat($('beforept').value)||0)),after=Math.max(0,Math.min(144,parseFloat($('afterpt').value)||0));
-    changeParagraphs(function(el){el.style.lineHeight=String(line);el.style.marginTop=before+'pt';el.style.marginBottom=after+'pt'});
+    changeParagraphs(function(el){applyWordLine(el,line);el.style.marginTop=before+'pt';el.style.marginBottom=after+'pt'});
   });
   function applyBorders(which){
     var targets=selectionCells();if(!targets.length)targets=selectionBlocks();
