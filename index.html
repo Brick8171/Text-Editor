@@ -91,6 +91,10 @@ select{height:24px;border:1px solid var(--fieldline);border-radius:2px;backgroun
 #page{width:var(--paper-width);min-height:var(--paper-height);background:transparent;color:#000;padding:0;box-shadow:none;outline:0;font:11pt/1.08 Calibri,Carlito,"Segoe UI",Arial,sans-serif;overflow-wrap:break-word;display:flex;flex-direction:column;gap:24px}
 #page > .writer-sheet{width:var(--paper-width);height:var(--paper-height);min-height:var(--paper-height);flex:none;background:white;padding:var(--paper-margin);box-shadow:0 0 0 1px rgba(0,0,0,.08),0 2px 10px rgba(0,0,0,.25);position:relative;overflow:visible;isolation:isolate}
 #page > .writer-sheet:focus-within{outline:none}
+/* Re-pagination is DOM-heavy; turn off scroll anchoring during page flow. */
+#scroll{overflow-anchor:none}
+#page{overflow-anchor:none}
+#page > .writer-sheet{overflow-anchor:none}
 #page > .writer-sheet:empty::before{content:' ';display:block;height:1em}
 #page.guides > .writer-sheet{outline:1px dashed #9aa}
 #page > .writer-sheet,#page > .writer-sheet:last-child{margin:0}
@@ -198,6 +202,19 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
 #date-dialog .date-actions button{border:1px solid var(--fieldline);border-radius:4px;padding:8px 18px;background:var(--field);color:var(--text);cursor:pointer;font:inherit}
 #date-dialog #date-insert{background:var(--blue);border-color:var(--blue);color:white}
 /* Word-like paragraph and border menus live outside the scrollable ribbon. */
+/* Searchable font library; selectable font styles are also available in the original list. */
+#fontpanel{width:min(365px,calc(100vw - 20px));max-height:min(78vh,620px);padding:10px;overflow:hidden;flex-direction:column;gap:8px}
+#fontpanel.open{display:flex}
+.fontpanel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;padding:3px 4px}
+#fonttotal{font-size:11px;color:var(--muted)}
+#fontsearch{height:34px;border-radius:4px;border:1px solid var(--fieldline);background:var(--field);color:var(--text);width:100%;padding:6px 9px;font:inherit;flex:none}
+#fontresults{overflow-y:auto;min-height:40px;max-height:440px;overscroll-behavior:contain}
+#fontresults .font-group-label{padding:10px 8px 3px;font-size:11px;font-weight:700;color:var(--muted);position:sticky;top:0;background:var(--rib)}
+#fontresults button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;padding:7px 9px;border-radius:4px;border:0;cursor:pointer;background:transparent;color:var(--text);text-align:left;min-height:44px}
+#fontresults button:hover,#fontresults button:focus-visible{background:var(--hover);outline:none}
+#fontresults .font-name{font-size:13px;line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+#fontresults .font-preview{color:var(--muted);font-size:13px;line-height:1.15;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#fontpanel .menu-info{padding:4px;font-size:11px;flex:none}
 .editor-popup{position:fixed;z-index:1000;display:none;min-width:224px;max-height:min(72vh,540px);overflow:auto;background:var(--rib);color:var(--text);border:1px solid var(--ribline);border-radius:5px;box-shadow:0 8px 28px #0003;padding:6px;font-size:12px;text-align:left}
 .editor-popup.open{display:block}
 .editor-popup button{width:100%;border:1px solid transparent;display:flex;align-items:center;justify-content:space-between;min-height:29px;gap:8px;background:transparent;color:inherit;border-radius:3px;padding:5px 9px;text-align:left;cursor:pointer;font:inherit}
@@ -230,7 +247,7 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
   <div class="panel on" id="p-home">
     <div class="grp"><div class="body"><div class="row"><button class="i" data-cmd="undo" title="Undo (Ctrl+Z)" data-ic="undo"></button></div><div class="row"><button class="i" data-cmd="redo" title="Redo (Ctrl+Y)" data-ic="redo"></button></div></div><div class="lbl">Undo</div></div>
     <div class="grp"><div class="body">
-      <div class="row"><select id="font" title="Font" style="width:176px" aria-label="Font family"><optgroup label="Office &amp; system fonts"><option value="Aptos" style="font-family:&#x27;Aptos&#x27;,sans-serif">Aptos</option><option value="Aptos Display" style="font-family:&#x27;Aptos Display&#x27;,sans-serif">Aptos Display</option><option value="Calibri" selected style="font-family:&#x27;Calibri&#x27;,sans-serif">Calibri</option><option value="Cambria" style="font-family:&#x27;Cambria&#x27;,sans-serif">Cambria</option><option value="Candara" style="font-family:&#x27;Candara&#x27;,sans-serif">Candara</option><option value="Constantia" style="font-family:&#x27;Constantia&#x27;,sans-serif">Constantia</option><option value="Corbel" style="font-family:&#x27;Corbel&#x27;,sans-serif">Corbel</option><option value="Consolas" style="font-family:&#x27;Consolas&#x27;,sans-serif">Consolas</option><option value="Arial" style="font-family:&#x27;Arial&#x27;,sans-serif">Arial</option><option value="Arial Narrow" style="font-family:&#x27;Arial Narrow&#x27;,sans-serif">Arial Narrow</option><option value="Arial Black" style="font-family:&#x27;Arial Black&#x27;,sans-serif">Arial Black</option><option value="Times New Roman" style="font-family:&#x27;Times New Roman&#x27;,sans-serif">Times New Roman</option><option value="Georgia" style="font-family:&#x27;Georgia&#x27;,sans-serif">Georgia</option><option value="Garamond" style="font-family:&#x27;Garamond&#x27;,sans-serif">Garamond</option><option value="Verdana" style="font-family:&#x27;Verdana&#x27;,sans-serif">Verdana</option><option value="Tahoma" style="font-family:&#x27;Tahoma&#x27;,sans-serif">Tahoma</option><option value="Segoe UI" style="font-family:&#x27;Segoe UI&#x27;,sans-serif">Segoe UI</option><option value="Trebuchet MS" style="font-family:&#x27;Trebuchet MS&#x27;,sans-serif">Trebuchet MS</option><option value="Courier New" style="font-family:&#x27;Courier New&#x27;,sans-serif">Courier New</option><option value="Palatino Linotype" style="font-family:&#x27;Palatino Linotype&#x27;,sans-serif">Palatino Linotype</option><option value="Book Antiqua" style="font-family:&#x27;Book Antiqua&#x27;,sans-serif">Book Antiqua</option><option value="Century Gothic" style="font-family:&#x27;Century Gothic&#x27;,sans-serif">Century Gothic</option><option value="Franklin Gothic Medium" style="font-family:&#x27;Franklin Gothic Medium&#x27;,sans-serif">Franklin Gothic Medium</option><option value="Impact" style="font-family:&#x27;Impact&#x27;,sans-serif">Impact</option><option value="Comic Sans MS" style="font-family:&#x27;Comic Sans MS&#x27;,sans-serif">Comic Sans MS</option><option value="Lucida Console" style="font-family:&#x27;Lucida Console&#x27;,sans-serif">Lucida Console</option><option value="Helvetica Neue" style="font-family:&#x27;Helvetica Neue&#x27;,sans-serif">Helvetica Neue</option><option value="Baskerville" style="font-family:&#x27;Baskerville&#x27;,sans-serif">Baskerville</option><option value="Avenir Next" style="font-family:&#x27;Avenir Next&#x27;,sans-serif">Avenir Next</option><option value="Gill Sans" style="font-family:&#x27;Gill Sans&#x27;,sans-serif">Gill Sans</option><option value="Menlo" style="font-family:&#x27;Menlo&#x27;,sans-serif">Menlo</option><option value="Liberation Sans" style="font-family:&#x27;Liberation Sans&#x27;,sans-serif">Liberation Sans</option><option value="Liberation Serif" style="font-family:&#x27;Liberation Serif&#x27;,sans-serif">Liberation Serif</option><option value="DejaVu Sans" style="font-family:&#x27;DejaVu Sans&#x27;,sans-serif">DejaVu Sans</option><option value="DejaVu Serif" style="font-family:&#x27;DejaVu Serif&#x27;,sans-serif">DejaVu Serif</option></optgroup><optgroup label="More fonts (online)"><option value="Inter" style="font-family:&#x27;Inter&#x27;,sans-serif">Inter</option><option value="Roboto" style="font-family:&#x27;Roboto&#x27;,sans-serif">Roboto</option><option value="Open Sans" style="font-family:&#x27;Open Sans&#x27;,sans-serif">Open Sans</option><option value="Lato" style="font-family:&#x27;Lato&#x27;,sans-serif">Lato</option><option value="Montserrat" style="font-family:&#x27;Montserrat&#x27;,sans-serif">Montserrat</option><option value="Poppins" style="font-family:&#x27;Poppins&#x27;,sans-serif">Poppins</option><option value="Nunito" style="font-family:&#x27;Nunito&#x27;,sans-serif">Nunito</option><option value="Raleway" style="font-family:&#x27;Raleway&#x27;,sans-serif">Raleway</option><option value="Oswald" style="font-family:&#x27;Oswald&#x27;,sans-serif">Oswald</option><option value="Quicksand" style="font-family:&#x27;Quicksand&#x27;,sans-serif">Quicksand</option><option value="Work Sans" style="font-family:&#x27;Work Sans&#x27;,sans-serif">Work Sans</option><option value="DM Sans" style="font-family:&#x27;DM Sans&#x27;,sans-serif">DM Sans</option><option value="Rubik" style="font-family:&#x27;Rubik&#x27;,sans-serif">Rubik</option><option value="Archivo" style="font-family:&#x27;Archivo&#x27;,sans-serif">Archivo</option><option value="Barlow" style="font-family:&#x27;Barlow&#x27;,sans-serif">Barlow</option><option value="Ubuntu" style="font-family:&#x27;Ubuntu&#x27;,sans-serif">Ubuntu</option><option value="Fira Sans" style="font-family:&#x27;Fira Sans&#x27;,sans-serif">Fira Sans</option><option value="Source Sans 3" style="font-family:&#x27;Source Sans 3&#x27;,sans-serif">Source Sans 3</option><option value="Merriweather" style="font-family:&#x27;Merriweather&#x27;,sans-serif">Merriweather</option><option value="Playfair Display" style="font-family:&#x27;Playfair Display&#x27;,sans-serif">Playfair Display</option><option value="Libre Baskerville" style="font-family:&#x27;Libre Baskerville&#x27;,sans-serif">Libre Baskerville</option><option value="PT Serif" style="font-family:&#x27;PT Serif&#x27;,sans-serif">PT Serif</option><option value="Fira Code" style="font-family:&#x27;Fira Code&#x27;,sans-serif">Fira Code</option><option value="Caveat" style="font-family:&#x27;Caveat&#x27;,sans-serif">Caveat</option><option value="Dancing Script" style="font-family:&#x27;Dancing Script&#x27;,sans-serif">Dancing Script</option><option value="Pacifico" style="font-family:&#x27;Pacifico&#x27;,sans-serif">Pacifico</option><option value="Bebas Neue" style="font-family:&#x27;Bebas Neue&#x27;,sans-serif">Bebas Neue</option><option value="Lobster" style="font-family:&#x27;Lobster&#x27;,sans-serif">Lobster</option><option value="Cinzel" style="font-family:&#x27;Cinzel&#x27;,sans-serif">Cinzel</option></optgroup></select><select id="size" title="Font size" style="width:52px"></select></div>
+      <div class="row"><select id="font" title="Font" style="width:176px" aria-label="Font family"><optgroup label="Office &amp; system fonts"><option value="Aptos" style="font-family:&#x27;Aptos&#x27;,sans-serif">Aptos</option><option value="Aptos Display" style="font-family:&#x27;Aptos Display&#x27;,sans-serif">Aptos Display</option><option value="Calibri" selected style="font-family:&#x27;Calibri&#x27;,sans-serif">Calibri</option><option value="Cambria" style="font-family:&#x27;Cambria&#x27;,sans-serif">Cambria</option><option value="Candara" style="font-family:&#x27;Candara&#x27;,sans-serif">Candara</option><option value="Constantia" style="font-family:&#x27;Constantia&#x27;,sans-serif">Constantia</option><option value="Corbel" style="font-family:&#x27;Corbel&#x27;,sans-serif">Corbel</option><option value="Consolas" style="font-family:&#x27;Consolas&#x27;,sans-serif">Consolas</option><option value="Arial" style="font-family:&#x27;Arial&#x27;,sans-serif">Arial</option><option value="Arial Narrow" style="font-family:&#x27;Arial Narrow&#x27;,sans-serif">Arial Narrow</option><option value="Arial Black" style="font-family:&#x27;Arial Black&#x27;,sans-serif">Arial Black</option><option value="Times New Roman" style="font-family:&#x27;Times New Roman&#x27;,sans-serif">Times New Roman</option><option value="Georgia" style="font-family:&#x27;Georgia&#x27;,sans-serif">Georgia</option><option value="Garamond" style="font-family:&#x27;Garamond&#x27;,sans-serif">Garamond</option><option value="Verdana" style="font-family:&#x27;Verdana&#x27;,sans-serif">Verdana</option><option value="Tahoma" style="font-family:&#x27;Tahoma&#x27;,sans-serif">Tahoma</option><option value="Segoe UI" style="font-family:&#x27;Segoe UI&#x27;,sans-serif">Segoe UI</option><option value="Trebuchet MS" style="font-family:&#x27;Trebuchet MS&#x27;,sans-serif">Trebuchet MS</option><option value="Courier New" style="font-family:&#x27;Courier New&#x27;,sans-serif">Courier New</option><option value="Palatino Linotype" style="font-family:&#x27;Palatino Linotype&#x27;,sans-serif">Palatino Linotype</option><option value="Book Antiqua" style="font-family:&#x27;Book Antiqua&#x27;,sans-serif">Book Antiqua</option><option value="Century Gothic" style="font-family:&#x27;Century Gothic&#x27;,sans-serif">Century Gothic</option><option value="Franklin Gothic Medium" style="font-family:&#x27;Franklin Gothic Medium&#x27;,sans-serif">Franklin Gothic Medium</option><option value="Impact" style="font-family:&#x27;Impact&#x27;,sans-serif">Impact</option><option value="Comic Sans MS" style="font-family:&#x27;Comic Sans MS&#x27;,sans-serif">Comic Sans MS</option><option value="Lucida Console" style="font-family:&#x27;Lucida Console&#x27;,sans-serif">Lucida Console</option><option value="Helvetica Neue" style="font-family:&#x27;Helvetica Neue&#x27;,sans-serif">Helvetica Neue</option><option value="Baskerville" style="font-family:&#x27;Baskerville&#x27;,sans-serif">Baskerville</option><option value="Avenir Next" style="font-family:&#x27;Avenir Next&#x27;,sans-serif">Avenir Next</option><option value="Gill Sans" style="font-family:&#x27;Gill Sans&#x27;,sans-serif">Gill Sans</option><option value="Menlo" style="font-family:&#x27;Menlo&#x27;,sans-serif">Menlo</option><option value="Liberation Sans" style="font-family:&#x27;Liberation Sans&#x27;,sans-serif">Liberation Sans</option><option value="Liberation Serif" style="font-family:&#x27;Liberation Serif&#x27;,sans-serif">Liberation Serif</option><option value="DejaVu Sans" style="font-family:&#x27;DejaVu Sans&#x27;,sans-serif">DejaVu Sans</option><option value="DejaVu Serif" style="font-family:&#x27;DejaVu Serif&#x27;,sans-serif">DejaVu Serif</option></optgroup><optgroup label="More fonts (online)"><option value="Inter" style="font-family:&#x27;Inter&#x27;,sans-serif">Inter</option><option value="Roboto" style="font-family:&#x27;Roboto&#x27;,sans-serif">Roboto</option><option value="Open Sans" style="font-family:&#x27;Open Sans&#x27;,sans-serif">Open Sans</option><option value="Lato" style="font-family:&#x27;Lato&#x27;,sans-serif">Lato</option><option value="Montserrat" style="font-family:&#x27;Montserrat&#x27;,sans-serif">Montserrat</option><option value="Poppins" style="font-family:&#x27;Poppins&#x27;,sans-serif">Poppins</option><option value="Nunito" style="font-family:&#x27;Nunito&#x27;,sans-serif">Nunito</option><option value="Raleway" style="font-family:&#x27;Raleway&#x27;,sans-serif">Raleway</option><option value="Oswald" style="font-family:&#x27;Oswald&#x27;,sans-serif">Oswald</option><option value="Quicksand" style="font-family:&#x27;Quicksand&#x27;,sans-serif">Quicksand</option><option value="Work Sans" style="font-family:&#x27;Work Sans&#x27;,sans-serif">Work Sans</option><option value="DM Sans" style="font-family:&#x27;DM Sans&#x27;,sans-serif">DM Sans</option><option value="Rubik" style="font-family:&#x27;Rubik&#x27;,sans-serif">Rubik</option><option value="Archivo" style="font-family:&#x27;Archivo&#x27;,sans-serif">Archivo</option><option value="Barlow" style="font-family:&#x27;Barlow&#x27;,sans-serif">Barlow</option><option value="Ubuntu" style="font-family:&#x27;Ubuntu&#x27;,sans-serif">Ubuntu</option><option value="Fira Sans" style="font-family:&#x27;Fira Sans&#x27;,sans-serif">Fira Sans</option><option value="Source Sans 3" style="font-family:&#x27;Source Sans 3&#x27;,sans-serif">Source Sans 3</option><option value="Merriweather" style="font-family:&#x27;Merriweather&#x27;,sans-serif">Merriweather</option><option value="Playfair Display" style="font-family:&#x27;Playfair Display&#x27;,sans-serif">Playfair Display</option><option value="Libre Baskerville" style="font-family:&#x27;Libre Baskerville&#x27;,sans-serif">Libre Baskerville</option><option value="PT Serif" style="font-family:&#x27;PT Serif&#x27;,sans-serif">PT Serif</option><option value="Fira Code" style="font-family:&#x27;Fira Code&#x27;,sans-serif">Fira Code</option><option value="Caveat" style="font-family:&#x27;Caveat&#x27;,sans-serif">Caveat</option><option value="Dancing Script" style="font-family:&#x27;Dancing Script&#x27;,sans-serif">Dancing Script</option><option value="Pacifico" style="font-family:&#x27;Pacifico&#x27;,sans-serif">Pacifico</option><option value="Bebas Neue" style="font-family:&#x27;Bebas Neue&#x27;,sans-serif">Bebas Neue</option><option value="Lobster" style="font-family:&#x27;Lobster&#x27;,sans-serif">Lobster</option><option value="Cinzel" style="font-family:&#x27;Cinzel&#x27;,sans-serif">Cinzel</option></optgroup></select><button class="i" id="fontbrowse" title="Search all fonts and styles" aria-label="Browse fonts" style="width:25px;flex:none;font-size:16px">⌕</button><select id="size" title="Font size" style="width:52px"></select></div>
       <div class="row">
         <button class="i" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
         <button class="i" data-cmd="italic" title="Italic (Ctrl+I)"><i style="font-family:Georgia,serif">I</i></button>
@@ -287,6 +304,12 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="rulerbtn"><span data-ic="ruler"></span>Ruler</button><button class="big" id="guidebtn"><span data-ic="pagebreak"></span>Page guides</button></div></div><div class="lbl">Show</div></div>
     <div class="grp" style="border-right:0"><div class="body"><div class="bigrow"><button class="big" id="theme"><span data-ic="moon"></span>Dark / light</button><button class="big" id="help" title="Keyboard shortcuts"><span data-ic="help"></span>Help</button></div></div><div class="lbl">Appearance</div></div>
   </div>
+</div>
+<div id="fontpanel" class="editor-popup" role="dialog" aria-label="Font library">
+  <div class="fontpanel-head"><strong>Font library</strong><span id="fonttotal"></span></div>
+  <input type="search" id="fontsearch" placeholder="Search fonts, bold, italic, light…" aria-label="Search font library" autocomplete="off">
+  <div id="fontresults" role="listbox" aria-label="Matching fonts"></div>
+  <div class="menu-info" id="fontfound">Choose a font to apply it to the selection.</div>
 </div>
 <div id="spacingmenu" class="editor-popup" role="menu" aria-label="Line and paragraph spacing">
   <div class="menu-title">Line spacing</div>
@@ -703,12 +726,13 @@ function writerBuildDocx(root, JSZip, opts){
       if((v=hex(el.getAttribute('color'))))o.color=v;
       if(el.getAttribute('face')){
         var face=el.getAttribute('face').split(',')[0].replace(/["']/g,'').trim();
-        var variant=face.match(/^(Aptos(?: Display| Narrow| Mono)?) (Light Italic|Light|Regular Italic|SemiBold Italic|SemiBold|ExtraBold|Bold Italic|Bold|Italic)$/i);
-        if(variant){
-          var kind=variant[2].toLowerCase();
-          o.font=(kind.indexOf('light')===0||kind.indexOf('semibold')===0||kind==='extrabold')?face.replace(/ italic$/i,''):variant[1];
-          if(kind==='bold'||kind==='bold italic')o.b=true;
-          if(kind.indexOf('italic')>=0)o.i=true;
+        var entry=window.WRITER_FONT_VARIANTS&&window.WRITER_FONT_VARIANTS.get(face);
+        if(entry){
+          // OOXML supports bold/italic flags. Light/medium/semibold styles
+          // need their named face too for Word to select that subfamily.
+          o.font=(entry.weight!==400&&entry.weight!==700)?face.replace(/ Italic$/,''):entry.base;
+          if(entry.weight>=700)o.b=true;
+          if(entry.italic)o.i=true;
         }else o.font=face;
       }
       var sz={1:8,2:10,3:12,4:14,5:18,6:24,7:36}[el.getAttribute('size')];if(sz)o.sz=sz*2;
@@ -729,7 +753,7 @@ function writerBuildDocx(root, JSZip, opts){
   function addRel(type,target,ext){var id='rId'+(relN++);rels.push('<Relationship Id="'+id+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/'+type+'" Target="'+esc(target)+'"'+(ext?' TargetMode="External"':'')+'/>');return id}
   function imageRun(img){
     var d=imgs.get(img);if(!d)return '';
-    var id=d.rid,cx=Math.round(d.w*9525),cy=Math.round(d.h*9525),n=prN++,st=img.style,mode=st.position==='absolute'?(st.zIndex==='0'?'behind':'front'):(st.cssFloat||(st.display==='block'?(st.marginLeft==='auto'&&st.marginRight==='auto'?'center':st.marginLeft==='auto'?'block-right':'block-left'):'inline'));
+    var id=d.rid,cx=Math.round(d.w*9525),cy=Math.round(d.h*9525),n=prN++,st=img.style,mode=st.position==='absolute'?(st.zIndex==='0'?'behind':'front'):((st.cssFloat==='left'||st.cssFloat==='right')?st.cssFloat:(st.display==='block'?(st.marginLeft==='auto'&&st.marginRight==='auto'?'center':st.marginLeft==='auto'?'block-right':'block-left'):'inline'));
     var anchor=mode!=='inline';
     var layout=anchor?'<wp:anchor distT="0" distB="0" distL="114300" distR="114300" simplePos="0" relativeHeight="1" behindDoc="'+(mode==='behind'?'1':'0')+'" locked="0" layoutInCell="1" allowOverlap="1"><wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="column"><wp:align>'+(mode==='right'||mode==='block-right'?'right':mode==='center'?'center':'left')+'</wp:align></wp:positionH><wp:positionV relativeFrom="paragraph"><wp:posOffset>0</wp:posOffset></wp:positionV><wp:extent cx="'+cx+'" cy="'+cy+'"/><wp:effectExtent l="0" t="0" r="0" b="0"/>'+(mode==='left'||mode==='right'?'<wp:wrapSquare wrapText="bothSides"/>':mode==='center'||mode.indexOf('block-')===0?'<wp:wrapTopAndBottom/>':'<wp:wrapNone/>'):'<wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+cx+'" cy="'+cy+'"/>';
     var width=parseFloat(st.borderWidth)||0,border=width?'<a:ln w="'+Math.round(width*9525)+'"><a:solidFill><a:srgbClr val="'+(hex(st.borderColor)||'2B579A')+'"/></a:solidFill></a:ln>':'';
@@ -1114,14 +1138,67 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     if(!part.textContent.trim()){block.appendChild(fragment);return null}
     return part;
   }
+  // Only rebuild page layout when it genuinely needs to change.
+  // Previously every input on page 2+ removed/recreated every sheet, causing
+  // the editor to jump to the top while the user was typing.
+  function needsPagination(sheets){
+    if(!sheets.length)return true;
+    for(var i=0;i<sheets.length;i++){
+      var sh=sheets[i];
+      if(overflowing(sh))return true;
+      // An explicit page break must start a separate sheet, but once it is
+      // already at the end of its sheet it needs no additional work.
+      var breaks=sh.querySelectorAll('hr.pb');
+      for(var br of breaks){
+        if(br.nextElementSibling||!sh.nextElementSibling)return true;
+      }
+    }
+    // When content is deleted, pull the next block back to the current sheet
+    // if the combined blocks will fit. Ignore deliberate page breaks.
+    for(var i=0;i<sheets.length-1;i++){
+      var sheet=sheets[i],next=sheets[i+1];
+      if(sheet.querySelector('hr.pb'))continue;
+      var first=next.firstElementChild;if(!first)continue;
+      var available=sheetLimit(sheet)-(sheet.lastElementChild?sheet.lastElementChild.getBoundingClientRect().bottom:sheet.getBoundingClientRect().top+parseFloat(getComputedStyle(sheet).paddingTop));
+      if(available>Math.max(38,first.getBoundingClientRect().height+10))return true;
+    }
+    return false;
+  }
+  var followingCaretRequest=null;
+  function caretBox(){
+    var sel=getSelection();if(!sel.rangeCount||!page.contains(sel.anchorNode))return null;
+    var r=sel.getRangeAt(0).cloneRange();r.collapse(false);
+    var rect=r.getBoundingClientRect();
+    if(rect&&rect.height&&Number.isFinite(rect.top))return rect;
+    // A blank line can have a zero-sized range; measure a temporary inline marker.
+    var marker=document.createElement('span');marker.setAttribute('aria-hidden','true');marker.style.cssText='display:inline-block;width:0;height:1em;overflow:hidden;pointer-events:none';
+    try{r.insertNode(marker);rect=marker.getBoundingClientRect();marker.remove();return rect}
+    catch(e){marker.remove();return null}
+  }
+  function followCaret(smooth){
+    if(document.activeElement!==page&&!page.contains(document.activeElement))return;
+    var rect=caretBox();if(!rect)return;
+    var box=sc.getBoundingClientRect(),padding=48;
+    // Keep at least a little space below the current line, so typing at the
+    // sheet boundary smoothly reveals the next page instead of snapping.
+    var viewportBottom=box.bottom-Math.min(110,sc.clientHeight*.18);
+    var distance=rect.bottom>viewportBottom?rect.bottom-viewportBottom:rect.top<box.top+padding?rect.top-(box.top+padding):0;
+    if(Math.abs(distance)<1)return;
+    sc.scrollTo({top:Math.max(0,sc.scrollTop+distance),behavior:smooth?'smooth':'auto'});
+  }
   function paginate(force){
     if(paginating)return;
     ensureSheets();
     var current=sheetNodes();
-    if(!force&&current.length===1&&!overflowing(current[0])&&!current[0].querySelector('hr.pb'))return;
+    if(!force&&!needsPagination(current)){followCaret(false);return}
     paginating=true;
     var focused=page.contains(document.activeElement)||document.activeElement===page;
     var caret=focused?captureCaret():null;
+    var oldScroll=sc.scrollTop,oldScrollHeight=sc.scrollHeight;
+    // Keep the scroll range stable while temporarily dismantling the sheets.
+    // Without this, the browser clamps scrollTop to zero mid-pagination.
+    var prevMinHeight=wrap.style.minHeight;
+    wrap.style.minHeight=Math.max(wrap.offsetHeight,Math.ceil(oldScrollHeight/Math.max(.25,curZoom)))+'px';
     try{
       var nodes=[];
       current.forEach(function(sheet){while(sheet.firstChild)nodes.push(sheet.removeChild(sheet.firstChild));sheet.remove()});
@@ -1150,7 +1227,15 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
       while(sheetNodes().length>1&&!sheetNodes().at(-1).hasChildNodes())sheetNodes().at(-1).remove();
       if(!sheetNodes().length)page.appendChild(newSheet());
       restoreCaret(caret);
-    }finally{paginating=false}
+      // Restoring a DOM selection may itself scroll to it. Restore the old
+      // viewport first, then gently reveal the caret on the following frame.
+      sc.scrollTop=Math.min(oldScroll,Math.max(0,sc.scrollHeight-sc.clientHeight));
+    }finally{
+      paginating=false;
+      wrap.style.minHeight=prevMinHeight;
+    }
+    if(followingCaretRequest!==null)cancelAnimationFrame(followingCaretRequest);
+    if(focused)followingCaretRequest=requestAnimationFrame(function(){followingCaretRequest=null;followCaret(true)});
   }
   function schedulePaginate(force){
     if(pageRequest!==null)cancelAnimationFrame(pageRequest);
@@ -1258,53 +1343,126 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   document.querySelectorAll('#gallery button').forEach(function(b){
     b.addEventListener('click',function(){restoreSel();var v=b.dataset.blk;document.execCommand('formatBlock',false,v==='p'?'<p>':'<'+v+'>');after()});
   });
-  var fontSelect=$('font');
-  var officeGroup=fontSelect.querySelector('optgroup');
-  ['Wingdings','Wingdings 2','Wingdings 3','Webdings','Symbol'].forEach(function(name){
-    if(Array.from(fontSelect.options).some(function(o){return o.value===name}))return;
-    var opt=document.createElement('option');opt.value=name;opt.textContent=name;officeGroup.appendChild(opt);
-  });
-  // Font variants are selectable like ordinary fonts. Keep their visible labels
-  // as the font-face value; browser CSS and DOCX export resolve the real family
-  // and weight. This works with the existing format-font command and sanitizer.
-  var aptosVariants=[];
-  function addAptosFamily(name,weights){
-    var base=Array.from(officeGroup.querySelectorAll('option')).find(function(o){return o.value===name});
-    if(!base){base=document.createElement('option');base.value=name;base.textContent=name;officeGroup.appendChild(base)}
-    var before=base.nextSibling;
-    weights.forEach(function(entry){
-      var suffix=entry[0],weight=entry[1],italic=!!entry[2],label=name+' '+suffix;
-      aptosVariants.push({name:label,base:name,weight:weight,italic:italic});
-      if(Array.from(fontSelect.options).some(function(o){return o.value===label}))return;
-      var opt=document.createElement('option');opt.value=label;opt.textContent=label;
-      opt.dataset.fontBase=name;opt.dataset.fontWeight=String(weight);opt.dataset.fontItalic=italic?'1':'0';
-      opt.style.fontFamily='"'+name+'", Arial, sans-serif';opt.style.fontWeight=String(weight);opt.style.fontStyle=italic?'italic':'normal';
-      officeGroup.insertBefore(opt,before);
+  /* Extensive font library. The display name is a selectable variant, while
+     the DOCX exporter uses its base family + correct weight/italic flags. */
+  var fontSelect=$('font'),fontLibrary=[],fontVariants=new Map(),fontFaces=new Map(),loadedFontCSS=new Set();
+  var initialFonts=Array.from(fontSelect.options).map(function(o){return {name:o.value,online:o.parentElement.label.indexOf('online')>=0}});
+  var officeNames=initialFonts.filter(function(o){return !o.online}).map(function(o){return o.name});
+  var onlineInitial=initialFonts.filter(function(o){return o.online}).map(function(o){return o.name});
+  function names(s){return s.split('|').map(function(x){return x.trim()}).filter(Boolean)}
+  var categories=[
+    {name:'Office & system', online:false, fonts:officeNames.concat(names('Aptos Narrow|Aptos Mono|Segoe UI Variable|Arial Nova|Arial Unicode MS|Bahnschrift|Bookman Old Style|Century|Century Schoolbook|Franklin Gothic Book|Goudy Old Style|Lucida Sans|Lucida Sans Unicode|Lucida Bright|MS Gothic|Yu Gothic|Meiryo|Noto Sans CJK JP|Microsoft YaHei|Microsoft JhengHei|Sitka Text|Tw Cen MT|Rockwell|Rockwell Nova|Bodoni MT|Perpetua|Algerian|Berlin Sans FB|Copperplate Gothic|Elephant|Gill Sans MT|High Tower Text|Modern No. 20|Monotype Corsiva|Segoe Print|Segoe Script|Script MT Bold|Brush Script MT|Wingdings|Wingdings 2|Wingdings 3|Webdings|Symbol'))},
+    {name:'Modern sans-serif · online',online:true,fonts:onlineInitial.filter(function(n){return !names('Merriweather|Playfair Display|Libre Baskerville|PT Serif|Fira Code|Caveat|Dancing Script|Pacifico|Bebas Neue|Lobster|Cinzel').includes(n)}).concat(names('Roboto Condensed|Roboto Flex|Inter Tight|Manrope|Mulish|Outfit|Plus Jakarta Sans|Urbanist|Sora|Jost|Lexend|Karla|Assistant|Asap|Asap Condensed|Arimo|Cabin|Cabin Condensed|Chivo|Dosis|Exo 2|Figtree|Heebo|Hind|Hind Siliguri|IBM Plex Sans|IBM Plex Sans Condensed|Inconsolata|Josefin Sans|Kanit|Libre Franklin|Maven Pro|M PLUS 1p|Noto Sans|Noto Sans Display|Noto Sans Condensed|Noto Sans JP|Noto Sans KR|Noto Sans SC|Overpass|Oxygen|PT Sans|PT Sans Narrow|Prompt|Public Sans|Questrial|Rajdhani|Red Hat Display|Red Hat Text|Righteous|Signika|Signika Negative|Space Grotesk|Sarabun|Titillium Web|Varela Round|Vollkorn SC|Yanone Kaffeesatz|Archivo Narrow|Barlow Condensed|Barlow Semi Condensed|Bitter Sans|Geologica|Golos Text|Onest|Schibsted Grotesk|Spline Sans|Spline Sans Mono|Syne|SUSE|Noto Sans Arabic|Noto Sans Hebrew|Noto Sans Devanagari'))},
+    {name:'Serif · online',online:true,fonts:names('Merriweather|Playfair Display|Libre Baskerville|PT Serif|Lora|Bitter|Crimson Text|Cormorant Garamond|Cormorant|Cormorant Infant|EB Garamond|DM Serif Display|DM Serif Text|Libre Caslon Text|Libre Caslon Display|Noto Serif|Noto Serif Display|Noto Serif JP|Noto Serif SC|Old Standard TT|Prata|Quattrocento|Quattrocento Sans|Roboto Serif|Source Serif 4|Spectral|Spectral SC|Vollkorn|Zilla Slab|Arvo|Alegreya|Alegreya Sans|Bree Serif|Cardo|Castoro|Domine|Faustina|Gentium Book Plus|Gelasio|Goudy Bookletter 1911|Halant|IBM Plex Serif|Judson|Literata|Lusitana|Marcellus|Newsreader|Petrona|Playfair|Rufina|Tinos|Unna|Yrsa|Cinzel')},
+    {name:'Display & headlines · online',online:true,fonts:names('Bebas Neue|Anton|Abril Fatface|Alfa Slab One|Archivo Black|Bangers|Black Ops One|Bowlby One SC|Bungee|Bungee Shade|Carter One|Changa One|Chewy|Concert One|Cookie|Dela Gothic One|Days One|Fjalla One|Fredoka|Francois One|Gochi Hand|Graduate|Great Vibes|Hammersmith One|Julius Sans One|Koulen|Lalezar|Lilita One|Luckiest Guy|Merriweather Sans|Monoton|Orbitron|Passion One|Patua One|Permanent Marker|Playball|Poiret One|Press Start 2P|Racing Sans One|Rammetto One|Righteous|Rowdies|Russo One|Secular One|Seymour One|Shrikhand|Special Elite|Staatliches|Teko|Tilt Neon|Tilt Warp|Titan One|Ultra|Unbounded|Vidaloka|Yeseva One')},
+    {name:'Handwriting & script · online',online:true,fonts:names('Caveat|Dancing Script|Pacifico|Lobster|Allura|Amatic SC|Bad Script|Berkshire Swash|Birthstone|Calligraffitti|Cedarville Cursive|Courgette|Covered By Your Grace|Damion|Gloria Hallelujah|Handlee|Indie Flower|Italianno|Kaushan Script|Kalam|La Belle Aurore|League Script|Lobster Two|Marck Script|Merienda|Mr Dafoe|Neucha|Nothing You Could Do|Oooh Baby|Pangolin|Patrick Hand|Petit Formal Script|Reenie Beanie|Rock Salt|Sacramento|Satisfy|Shadows Into Light|Shadows Into Light Two|Tangerine|The Girl Next Door|Yellowtail|Zeyada')},
+    {name:'Monospace · online',online:true,fonts:names('Fira Code|Roboto Mono|IBM Plex Mono|JetBrains Mono|Source Code Pro|Space Mono|Ubuntu Mono|PT Mono|Anonymous Pro|Cousine|Cutive Mono|DM Mono|Inconsolata|Martian Mono|Nanum Gothic Coding|Noto Sans Mono|Overpass Mono|Red Hat Mono|Share Tech Mono|Spline Sans Mono|Syne Mono|Victor Mono|VT323')}
+  ];
+  // Fonts known to have a wider weight range. Less versatile families get
+  // regular/bold/italic only; decorative fonts are not given imaginary variants.
+  var richFonts=new Set(names('Aptos|Aptos Display|Aptos Narrow|Aptos Mono|Segoe UI|Segoe UI Variable|Arial|Arial Nova|Calibri|Candara|Corbel|Bahnschrift|Inter|Inter Tight|Roboto|Roboto Condensed|Roboto Flex|Open Sans|Lato|Montserrat|Poppins|Nunito|Raleway|Work Sans|DM Sans|Rubik|Archivo|Barlow|Ubuntu|Fira Sans|Source Sans 3|Manrope|Mulish|Outfit|Plus Jakarta Sans|Urbanist|Sora|Jost|Lexend|Karla|Cabin|Chivo|Exo 2|Figtree|Heebo|Hind|IBM Plex Sans|Libre Franklin|Noto Sans|Overpass|PT Sans|Public Sans|Red Hat Text|Space Grotesk|Titillium Web|Roboto Serif|Lora|Crimson Text|EB Garamond|Alegreya|Bitter|Newsreader|Literata|Roboto Mono|JetBrains Mono|Fira Code|Source Code Pro|IBM Plex Mono|Noto Sans Mono'));
+  var simpleFaces=new Set(names('Pacifico|Lobster|Anton|Abril Fatface|Bebas Neue|Bangers|Permanent Marker|Monoton|Press Start 2P|Orbitron|Ultra|Shrikhand|Great Vibes|Allura|Dancing Script|Tangerine|Sacramento|Lobster Two|Indie Flower|Amatic SC|Yellowtail|Kaushan Script|Cookie|Caveat|Righteous|Bungee|Alfa Slab One|Archivo Black|Black Ops One|VT323'));
+  var unavailableVariants=new Set(names('Wingdings|Wingdings 2|Wingdings 3|Webdings|Symbol|MS Gothic|Yu Gothic|Meiryo'));
+  var variantStyles=[['Thin',100,false],['ExtraLight',200,false],['Light',300,false],['Medium',500,false],['SemiBold',600,false],['Bold',700,false],['ExtraBold',800,false],['Black',900,false],['Italic',400,true],['Light Italic',300,true],['Medium Italic',500,true],['SemiBold Italic',600,true],['Bold Italic',700,true],['ExtraBold Italic',800,true],['Black Italic',900,true]];
+  var fontGroups=new Map();
+  function addFont(base,group,online){
+    if(fontFaces.has(base))return;
+    var def={name:base,base:base,group:group,online:online,weight:400,italic:false};fontFaces.set(base,def);fontLibrary.push(def);
+    var variants=[];
+    if(!unavailableVariants.has(base)){
+      if(richFonts.has(base))variants=variantStyles;
+      else if(!simpleFaces.has(base))variants=[['Bold',700,false],['Italic',400,true],['Bold Italic',700,true]];
+    }
+    variants.forEach(function(v){var label=base+' '+v[0];if(fontFaces.has(label))return;
+      var item={name:label,base:base,group:group,online:online,weight:v[1],italic:v[2],variant:true};
+      fontVariants.set(label,item);fontLibrary.push(item);fontFaces.set(label,item);
     });
   }
-  addAptosFamily('Aptos', [['Light',300],['Light Italic',300,true],['Regular Italic',400,true],['SemiBold',600],['SemiBold Italic',600,true],['Bold',700],['Bold Italic',700,true],['ExtraBold',800]]);
-  addAptosFamily('Aptos Display', [['Light',300],['Light Italic',300,true],['Italic',400,true],['SemiBold',600],['Bold',700],['Bold Italic',700,true]]);
-  addAptosFamily('Aptos Narrow', [['Italic',400,true],['Bold',700],['Bold Italic',700,true]]);
-  addAptosFamily('Aptos Mono', [['Bold',700],['Italic',400,true],['Bold Italic',700,true]]);
-  // execCommand('fontName') writes a <font face="..."> in browsers. Map each
-  // variant to a real Aptos family and CSS weight so it displays correctly even
-  // when the variant is not registered as an independent installed font.
-  var aptosStyle=document.createElement('style');aptosStyle.id='aptos-variant-styles';
-  aptosStyle.textContent=aptosVariants.slice().sort(function(a,b){return a.name.length-b.name.length}).map(function(v){
-    // Imported DOCX text uses inline styled spans; edited text uses <font face>.
-    var selector='#page font[face="'+v.name+'"],#page span[style*="'+v.name+'"]';
-    return selector+'{font-family:"'+v.base+'",Arial,sans-serif!important;font-weight:'+v.weight+'!important;font-style:'+(v.italic?'italic':'normal')+'!important}';
-  }).join('\n');
-  document.head.appendChild(aptosStyle);
-  function previewFont(){
-    var selected=fontSelect.selectedOptions[0],face=fontSelect.value.replace(/[\"']/g,'');
-    var variant=aptosVariants.find(function(v){return v.name===face});
-    fontSelect.style.fontFamily='"'+(variant?variant.base:face)+'", Arial, sans-serif';
-    fontSelect.style.fontWeight=variant?String(variant.weight):'normal';
-    fontSelect.style.fontStyle=variant&&variant.italic?'italic':'normal';
+  categories.forEach(function(g){g.fonts.forEach(function(n){addFont(n,g.name,g.online)})});
+  // Map shared with the WordprocessingML exporter (which is defined outside
+  // this editor IIFE); no font files or binary assets are bundled.
+  window.WRITER_FONT_VARIANTS=fontVariants;
+  fontSelect.replaceChildren();
+  categories.forEach(function(group){
+    var optgroup=document.createElement('optgroup');optgroup.label=group.name;
+    fontLibrary.filter(function(x){return x.group===group.name}).forEach(function(info){
+      var o=document.createElement('option');o.value=info.name;o.textContent=info.name;
+      o.style.fontFamily='"'+info.base.replace(/"/g,'')+'",Arial,sans-serif';
+      o.style.fontWeight=String(info.weight);o.style.fontStyle=info.italic?'italic':'normal';
+      optgroup.appendChild(o);
+    });fontSelect.appendChild(optgroup);
+  });
+  fontSelect.value='Calibri';
+  $('fonttotal').textContent=fontFaces.size+' font choices';
+  var variantRules=document.createElement('style');variantRules.id='writer-font-variants';document.head.appendChild(variantRules);
+  var activatedVariants=new Set();
+  function activateFontVariant(info){
+    if(!info||!info.variant||activatedVariants.has(info.name))return;
+    activatedVariants.add(info.name);
+    // CSS applies only to contenteditable <font> elements made by execCommand.
+    // Imported Word runs use their own inline styling and are left untouched.
+    var rule='#page font[face='+JSON.stringify(info.name)+']{font-family:'+JSON.stringify(info.base)+',Arial,sans-serif!important;font-weight:'+info.weight+'!important;font-style:'+(info.italic?'italic':'normal')+'!important}';
+    try{variantRules.sheet.insertRule(rule,variantRules.sheet.cssRules.length)}catch(e){}
   }
-  fontSelect.addEventListener('change',function(){previewFont();cmd('fontName',this.value)});
+  function requestOnlineFont(info){
+    if(!info||!info.online||!navigator.onLine)return;
+    var key=info.base+':'+info.weight+':'+(info.italic?'1':'0');
+    if(loadedFontCSS.has(key))return;loadedFontCSS.add(key);
+    var link=document.createElement('link');link.rel='stylesheet';
+    link.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(info.base).replace(/%20/g,'+')+':ital,wght@'+(info.italic?'1':'0')+','+info.weight+'&display=swap';
+    link.onload=function(){schedulePaginate(true)};
+    document.head.appendChild(link);
+  }
+  function prepareDocumentFonts(){
+    var found=new Set();
+    page.querySelectorAll('font[face]').forEach(function(el){found.add(el.getAttribute('face'))});
+    page.querySelectorAll('[style*="font-family"]').forEach(function(el){found.add(el.style.fontFamily.replace(/['"]/g,'').split(',')[0].trim())});
+    found.forEach(function(name){var info=fontFaces.get(name);if(info){activateFontVariant(info);requestOnlineFont(info)}});
+  }
+  function previewFont(){
+    var info=fontFaces.get(fontSelect.value)||{base:fontSelect.value,weight:400,italic:false};
+    fontSelect.style.fontFamily='"'+info.base+'",Arial,sans-serif';
+    fontSelect.style.fontWeight=String(info.weight);fontSelect.style.fontStyle=info.italic?'italic':'normal';
+  }
+  function chooseFont(name){
+    var info=fontFaces.get(name);if(!info)return;
+    fontSelect.value=name;previewFont();activateFontVariant(info);requestOnlineFont(info);
+    cmd('fontName',name);
+  }
+  fontSelect.addEventListener('change',function(){chooseFont(this.value)});
   previewFont();
+  // Searchable catalog complements (and doesn't replace) the ordinary font select.
+  var fontPanel=$('fontpanel'),searchFont=$('fontsearch'),fontResults=$('fontresults');
+  function displayFonts(){
+    var term=searchFont.value.toLocaleLowerCase().trim(),matches=fontLibrary.filter(function(info){return !term||info.name.toLocaleLowerCase().includes(term)});
+    fontResults.replaceChildren();var lastGroup='',shown=0;
+    for(var i=0;i<matches.length&&shown<90;i++){
+      var info=matches[i];
+      if(lastGroup!==info.group){var heading=document.createElement('div');heading.className='font-group-label';heading.textContent=info.group;fontResults.appendChild(heading);lastGroup=info.group}
+      var button=document.createElement('button');button.type='button';button.dataset.fontName=info.name;
+      var label=document.createElement('span');label.className='font-name';label.textContent=info.name;
+      var preview=document.createElement('span');preview.className='font-preview';preview.textContent='Aa Bb Cc 123 — Sample';
+      preview.style.fontFamily='"'+info.base+'",Arial,sans-serif';preview.style.fontWeight=String(info.weight);preview.style.fontStyle=info.italic?'italic':'normal';
+      button.append(label,preview);fontResults.appendChild(button);shown++;
+    }
+    $('fontfound').textContent=matches.length+' matches'+(matches.length>shown?' · showing '+shown+'; narrow your search':'')+' · online fonts need internet';
+  }
+  $('fontbrowse').addEventListener('click',function(){
+    var open=fontPanel.classList.toggle('open');
+    if(open){saveSel();var rect=this.getBoundingClientRect(),top=rect.bottom+5;
+      fontPanel.style.left=Math.max(6,Math.min(innerWidth-380,rect.left-160))+'px';
+      fontPanel.style.top=Math.min(top,Math.max(6,innerHeight-450))+'px';
+      searchFont.value='';displayFonts();searchFont.focus();}
+  });
+  searchFont.addEventListener('input',displayFonts);
+  fontResults.addEventListener('click',function(e){
+    var button=e.target.closest('button[data-font-name]');if(!button)return;
+    fontPanel.classList.remove('open');chooseFont(button.dataset.fontName);
+  });
+  document.addEventListener('pointerdown',function(e){if(fontPanel.classList.contains('open')&&!fontPanel.contains(e.target)&&!$('fontbrowse').contains(e.target))fontPanel.classList.remove('open')});
+  fontPanel.addEventListener('keydown',function(e){if(e.key==='Escape'){e.stopPropagation();fontPanel.classList.remove('open');$('fontbrowse').focus()}});
+  // Include legacy stored font names in the new selector and keep them renderable.
+  prepareDocumentFonts();
   sizeSel.addEventListener('change',function(){
     restoreSel();document.execCommand('fontSize',false,'7');var px=this.value+'pt';
     page.querySelectorAll('font[size="7"]').forEach(function(f){var s=document.createElement('span');s.style.fontSize=px;while(f.firstChild)s.appendChild(f.firstChild);f.parentNode.replaceChild(s,f)});
@@ -1363,7 +1521,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   $('img').addEventListener('click',function(){saveSel();$('file').click()});
   $('file').addEventListener('change',function(){
     var f=this.files[0];if(!f)return;var r=new FileReader();
-    r.onload=function(){html('<img src="'+r.result+'" alt="Picture">')};r.readAsDataURL(f);this.value='';
+    r.onload=function(){html('<img src="'+r.result+'" alt="Picture" style="display:inline;float:none;position:static;vertical-align:baseline">')};r.readAsDataURL(f);this.value='';
   });
   /* Picture Format contextual ribbon: operates on a real selected document image. */
   var selectedPicture=null,priorTab='home';
@@ -1523,7 +1681,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   });
   page.addEventListener('paste',function(e){
     var items=Array.from((e.clipboardData&&e.clipboardData.items)||[]),image=items.find(function(x){return x.type.indexOf('image/')===0});
-    if(image){e.preventDefault();var f=image.getAsFile();if(f){var r=new FileReader();r.onload=function(){html('<img src="'+r.result+'" alt="Pasted picture">')};r.readAsDataURL(f)}return}
+    if(image){e.preventDefault();var f=image.getAsFile();if(f){var r=new FileReader();r.onload=function(){html('<img src="'+r.result+'" alt="Pasted picture" style="display:inline;float:none;position:static;vertical-align:baseline">')};r.readAsDataURL(f)}return}
     var h=e.clipboardData&&e.clipboardData.getData('text/html');
     if(h){e.preventDefault();document.execCommand('insertHTML',false,writerSanitizeHtml(h));after()}
   });
@@ -1628,7 +1786,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   $('opendoc').addEventListener('click',function(){$('docfile').click()});
   $('docfile').addEventListener('change',function(){var f=this.files[0];this.value='';openFile(f)});
   sc.addEventListener('dragover',function(e){if(e.dataTransfer&&[].indexOf.call(e.dataTransfer.types||[],'Files')>=0)e.preventDefault()});
-  sc.addEventListener('drop',function(e){var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(f){e.preventDefault();if(/\.(docx|html?|txt)$/i.test(f.name))openFile(f);else if(f.type&&f.type.indexOf('image/')===0){var r=new FileReader();r.onload=function(){html('<img src="'+r.result+'" alt="Picture">')};r.readAsDataURL(f)}}},true);
+  sc.addEventListener('drop',function(e){var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(f){e.preventDefault();if(/\.(docx|html?|txt)$/i.test(f.name))openFile(f);else if(f.type&&f.type.indexOf('image/')===0){var r=new FileReader();r.onload=function(){html('<img src="'+r.result+'" alt="Picture" style="display:inline;float:none;position:static;vertical-align:baseline">')};r.readAsDataURL(f)}}},true);
 
   /* export .docx */
   function toBytes(b64){var bin=atob(b64),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u}
