@@ -111,6 +111,11 @@ select{height:24px;border:1px solid var(--fieldline);border-radius:2px;backgroun
 #page img{max-width:100%}
 #page blockquote{margin:8pt 24px;border-left:3px solid #bbb;padding-left:10px;color:#444;font-style:italic}
 #page a{color:#0563c1}
+#page span[data-writer-text-border="1"]{box-decoration-break:clone;-webkit-box-decoration-break:clone}
+/* Keep the border scope choices separate so the menu clearly distinguishes
+   borders around highlighted words from full paragraph-width rules. */
+#bordersmenu[data-scope="text"] .border-for-paragraph{display:none}
+#bordersmenu[data-scope="paragraph"] .border-for-text{display:none}
 #page span[data-writer-date="live"]{cursor:default}
 @media print{#page span[data-writer-date="live"]{background:none!important}}
 .pb{border:0;border-top:1px dashed #999;margin:20px 0;page-break-after:always}
@@ -320,6 +325,7 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
   <div class="panel" id="p-view">
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="z100"><span data-ic="zoom"></span>100%</button><button class="big" id="zfit"><span data-ic="fit"></span>Fit width</button></div></div><div class="lbl">Zoom</div></div>
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="rulerbtn"><span data-ic="ruler"></span>Ruler</button><button class="big" id="guidebtn"><span data-ic="pagebreak"></span>Page guides</button></div></div><div class="lbl">Show</div></div>
+    <div class="grp"><div class="body"><div class="row"><select id="pagepreview" title="Adjust only how Word lines fit on screen; DOCX spacing stays unchanged" aria-label="Word page preview fit" style="min-width:155px"><option value="1.08">More room</option><option value="1.10">Slightly more room</option><option value="1.12" selected>Word-like (default)</option><option value="1.14">Slightly tighter</option><option value="1.16">Tighter fit</option></select></div></div><div class="lbl">Page preview fit</div></div>
     <div class="grp" style="border-right:0"><div class="body"><div class="bigrow"><button class="big" id="theme"><span data-ic="moon"></span>Dark / light</button><button class="big" id="help" title="Keyboard shortcuts"><span data-ic="help"></span>Help</button></div></div><div class="lbl">Appearance</div></div>
   </div>
 </div>
@@ -340,14 +346,24 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
   <label class="menu-fields"><span>After (pt)</span><input id="afterpt" type="number" min="0" max="144" step="1" value="8"></label>
   <button id="applyspacing" class="menu-primary">Apply spacing</button>
 </div>
-<div id="bordersmenu" class="editor-popup" role="menu" aria-label="Paragraph and table borders">
+<div id="bordersmenu" class="editor-popup" role="menu" aria-label="Text and paragraph borders" data-scope="paragraph">
   <div class="menu-title">Borders</div>
-  <button data-border="bottom">Bottom Border</button><button data-border="top">Top Border</button><button data-border="left">Left Border</button><button data-border="right">Right Border</button>
-  <button data-border="outside">Outside Borders</button><button data-border="all">All Borders</button><button data-border="none">No Border</button>
+  <label class="menu-fields"><span>Apply to</span><select id="borderscope" title="Choose a border around selected words or around a whole paragraph"><option value="text">Selected text only</option><option value="paragraph">Paragraph / table cell</option></select></label>
+  <div class="border-for-paragraph">
+    <div class="menu-title">Paragraph and table borders</div>
+    <button data-border="all">▣ Full Box</button><button data-border="bottom">Bottom Border</button><button data-border="top">Top Border</button><button data-border="left">Left Border</button><button data-border="right">Right Border</button>
+    <button data-border="outside">Outside Borders</button><button data-border="none">No Border</button>
+  </div>
+  <div class="border-for-text">
+    <div class="menu-title">Border around highlighted text</div>
+    <button id="textborder" data-text-border="all">▣ Full Box — Selected Text</button>
+    <button data-text-border="top">Top Only</button><button data-text-border="bottom">Bottom Only</button><button data-text-border="left">Left Only</button><button data-text-border="right">Right Only</button>
+    <button id="removetextborder" title="Remove the border without changing the text">No Text Border</button>
+  </div>
   <hr class="menu-line"><div class="menu-title">Border options</div>
   <label class="menu-fields"><span>Line width</span><select id="borderwidth"><option value="0.5">0.5 px</option><option value="1" selected>1 px</option><option value="1.5">1.5 px</option><option value="2">2 px</option><option value="3">3 px</option></select></label>
   <label class="menu-fields"><span>Line color</span><input id="bordercolor" type="color" value="#444444"></label>
-  <div class="menu-info">Select paragraphs or click inside a table cell before applying a border.</div>
+  <div class="menu-info">Selected text borders stay around the words. Paragraph borders extend across the paragraph. Word DOCX supports full character boxes; individual character sides may display as a box in Word.</div>
 </div>
 <div id="findbar"><input id="findtext" placeholder="Find in document" aria-label="Find text"><input id="replacetext" placeholder="Replace with" aria-label="Replacement text"><button id="prevfind">↑ Previous</button><button id="nextfind">↓ Next</button><button id="replaceone">Replace</button><button id="replaceall">Replace all</button><span id="findcount"></span><button id="closefind" aria-label="Close find bar">✕</button></div>
 <div id="tablebar"><span>Insert table:</span><label>Rows <input id="tablerows" type="number" min="1" max="25" value="3"></label><label>Columns <input id="tablecols" type="number" min="1" max="12" value="3"></label><button id="tableok">Insert table</button><button id="tablecancel">Cancel</button></div>
@@ -397,7 +413,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 <script>
 /* Portable DOCX import and safety helpers. No network access required. */
 /* Word-compatible date formats shared by the editor and DOCX reader/writer. */
-var WRITER_WORD_LINE_SCALE=1.16;
+var WRITER_WORD_LINE_SCALE=1.12;
 var WRITER_DATE_FORMATS={
   'de-short':{docx:'dd.MM.yyyy',locale:'de-AT',opts:{day:'2-digit',month:'2-digit',year:'numeric'}},
   'de-long':{docx:'d. MMMM yyyy',locale:'de-AT',opts:{day:'numeric',month:'long',year:'numeric'}},
@@ -441,6 +457,7 @@ function writerSanitizeHtml(source) {
         try{el.style.setProperty(prop,v)}catch(e){}
       }
     }
+    if(tag==='span'&&node.getAttribute('data-writer-text-border')==='1')el.setAttribute('data-writer-text-border','1');
     if(tag==='span'&&node.getAttribute('data-writer-date')==='live'){
       var fmt=node.getAttribute('data-date-format');
       if(Object.prototype.hasOwnProperty.call(WRITER_DATE_FORMATS,fmt)){
@@ -589,6 +606,16 @@ async function writerReadDocx(file){
       var ft=one(style,'rFonts');if(ft){var family=wordFontAttrs(ft);if(family){face=family;set('fontFamily','"'+family.replace(/"/g,'')+'", Carlito, Arial, sans-serif')}}
       var shd=one(style,'shd'),bg=attr(shd,'fill')||val(style,'highlight');var colors={yellow:'#ffff00',green:'#00ff00',cyan:'#00ffff',magenta:'#ff00ff'};
       if(/^[0-9a-f]{6}$/i.test(bg))set('backgroundColor','#'+bg);else if(colors[bg])set('backgroundColor',colors[bg]);
+      var charBorder=one(style,'bdr');
+      if(charBorder){
+        var kind=attr(charBorder,'val'),borderSize=+attr(charBorder,'sz')||6,borderColor=attr(charBorder,'color');
+        if(kind&&kind!=='nil'&&kind!=='none'){
+          set('border',Math.max(.5,Math.min(10,borderSize/6))+'px solid '+(/^[a-f0-9]{6}$/i.test(borderColor)?'#'+borderColor:'#444444'));
+          set('paddingLeft',Math.max(0,Math.min(5,+attr(charBorder,'space')||0))+'px');
+          set('paddingRight',Math.max(0,Math.min(5,+attr(charBorder,'space')||0))+'px');
+          holder.setAttribute('data-writer-text-border','1');
+        }
+      }
       var va=val(style,'vertAlign');if(va==='superscript')set('verticalAlign','super');if(va==='subscript')set('verticalAlign','sub');
     }
     for(var c of node.children){
@@ -851,6 +878,10 @@ function writerBuildDocx(root, JSZip, opts){
     if(f.sz)s+='<w:sz w:val="'+f.sz+'"/><w:szCs w:val="'+f.sz+'"/>';
     if(f.u)s+='<w:u w:val="single"/>';
     if(f.bg)s+='<w:shd w:val="clear" w:color="auto" w:fill="'+f.bg+'"/>';
+    if(f.charBorder){
+      var cb=f.charBorder;
+      s+='<w:bdr w:val="single" w:sz="'+cb.sz+'" w:space="'+cb.space+'" w:color="'+cb.color+'"/>';
+    }
     if(f.va)s+='<w:vertAlign w:val="'+f.va+'"/>';
     return s?'<w:rPr>'+s+'</w:rPr>':'';
   }
@@ -887,6 +918,10 @@ function writerBuildDocx(root, JSZip, opts){
     if((v=hex(fs.backgroundColor)))o.bg=v;
     if(fs.fontFamily)o.font=String(fs.fontFamily).split(',')[0].replace(/["']/g,'').trim();
     if(fs.fontSize&&(v=halfPts(fs.fontSize)))o.sz=v;
+    if(t==='SPAN'&&el.getAttribute('data-writer-text-border')==='1'||(t==='SPAN'&&fs.borderStyle&&fs.borderStyle!=='none'&&fs.borderStyle!=='hidden')){
+      var borderWidth=parseFloat(fs.borderWidth)||1;
+      o.charBorder={sz:Math.max(2,Math.min(96,Math.round(borderWidth*6))),color:hex(fs.borderColor)||'444444',space:Math.max(0,Math.min(31,Math.round(parseFloat(fs.paddingLeft)||0)))};
+    }
     if(fs.verticalAlign==='super')o.va='superscript';
     if(fs.verticalAlign==='sub')o.va='subscript';
     return merge(f,o);
@@ -1428,6 +1463,21 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   }
   var d=load(KEY)||load('writer-doc-v1');if(d){try{var o=JSON.parse(d);if(o.html)page.innerHTML=writerSanitizeHtml(o.html);if(o.name)$('docname').value=o.name;if(o.layout)Object.assign(pageLayout,o.layout)}catch(e){}}
   ensureSheets();
+  var savedPageFit=parseFloat(load('writer-page-fit-v1')||'1.12');
+  if([1.08,1.10,1.12,1.14,1.16].some(function(v){return Math.abs(v-savedPageFit)<.001}))WRITER_WORD_LINE_SCALE=savedPageFit;
+  $('pagepreview').value=String(WRITER_WORD_LINE_SCALE);
+  function refreshWordPreviewLines(){
+    page.querySelectorAll('[data-writer-word-line]').forEach(function(el){
+      var line=+(el.getAttribute('data-writer-word-line')||0);
+      if(line>=120&&line<=1440)el.style.lineHeight=(Math.round((line/240)*WRITER_WORD_LINE_SCALE*10000)/10000).toString();
+    });
+  }
+  refreshWordPreviewLines();
+  $('pagepreview').addEventListener('change',function(){
+    WRITER_WORD_LINE_SCALE=+this.value||1.12;
+    store('writer-page-fit-v1',String(WRITER_WORD_LINE_SCALE));
+    refreshWordPreviewLines();applyLayout();persist();
+  });
   var th=load('writer-theme');if(th)document.documentElement.setAttribute('data-theme',th);
   ['papersize','orientation','margins','linespacing'].forEach(function(id){$(id).addEventListener('change',function(){pageLayout.custom=null;pageLayout.paper=$('papersize').value;pageLayout.orientation=$('orientation').value;pageLayout.margins=$('margins').value;pageLayout.line=$('linespacing').value;applyLayout();persist()})});
 
@@ -1478,6 +1528,11 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   function popupOpen(name,anchor){
     if(activePopup===name){closePopup();return}
     closePopup();saveSel();var panel=$(name);panel.classList.add('open');activePopup=name;
+    if(name==='bordersmenu'){
+      // If the user highlighted words, prefer a border around those words.
+      var scope=selectedTextRange()?'text':'paragraph';
+      $('borderscope').value=scope;panel.dataset.scope=scope;
+    }
     var rect=anchor.getBoundingClientRect(),h=panel.getBoundingClientRect().height,w=panel.getBoundingClientRect().width;
     panel.style.left=Math.max(6,Math.min(rect.left,innerWidth-w-7))+'px';
     panel.style.top=(rect.bottom+h>innerHeight-8&&rect.top>h?Math.max(6,rect.top-h-4):Math.min(innerHeight-h-6,rect.bottom+4))+'px';
@@ -1495,6 +1550,12 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   }
   $('spacingbtn').addEventListener('click',function(){popupOpen('spacingmenu',this)});
   $('bordersbtn').addEventListener('click',function(){popupOpen('bordersmenu',this)});
+  $('borderscope').addEventListener('change',function(){
+    $('bordersmenu').dataset.scope=this.value;
+    // The menu's height changes between the text/paragraph settings.
+    var menu=$('bordersmenu'),r=menu.getBoundingClientRect();
+    if(r.bottom>innerHeight-8)menu.style.top=Math.max(5,innerHeight-r.height-8)+'px';
+  });
   document.addEventListener('pointerdown',function(e){
     if(activePopup&&!$(activePopup).contains(e.target)&&e.target!==$('spacingbtn')&&e.target!==$('bordersbtn'))closePopup();
   });
@@ -1522,6 +1583,56 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
       });
     });after();closePopup();
   }
+  function selectedTextRange(){
+    var range=saved;
+    if(!range||range.collapsed||!page.contains(range.commonAncestorContainer)||!range.toString().trim())return null;
+    function blockOf(node){
+      var element=node.nodeType===1?node:node.parentElement;
+      return element&&element.closest('p,h1,h2,h3,h4,h5,h6,li,blockquote,pre,td,th');
+    }
+    // A text border is an inline character format; don't extract whole paragraphs.
+    var start=blockOf(range.startContainer),end=blockOf(range.endContainer);
+    return start&&start===end?range.cloneRange():null;
+  }
+  function insertTextBorder(which){
+    var range=selectedTextRange();
+    if(!range){say('Highlight text within one paragraph to add a text border.');closePopup();return}
+    which=which||'all';
+    // Reapplying a different border to an already outlined selection should
+    // update the existing span, rather than add nested border rectangles.
+    var candidate=range.commonAncestorContainer.nodeType===1?range.commonAncestorContainer:range.commonAncestorContainer.parentElement;
+    var existing=candidate&&candidate.closest&&candidate.closest('span[data-writer-text-border="1"]');
+    var element;
+    if(existing&&range.toString()===existing.textContent){element=existing}
+    else {
+      element=document.createElement('span');
+      var fragment=range.extractContents();element.appendChild(fragment);range.insertNode(element);
+    }
+    element.setAttribute('data-writer-text-border','1');
+    var thick=$('borderwidth').value+'px solid '+$('bordercolor').value;
+    element.style.border='none';
+    ['Top','Bottom','Left','Right'].forEach(function(side){element.style['border'+side]=which==='all'||side.toLowerCase()===which?thick:'none'});
+    element.style.paddingLeft=which==='all'||which==='left'?'2px':'0px';
+    element.style.paddingRight=which==='all'||which==='right'?'2px':'0px';
+    var selection=getSelection(),newRange=document.createRange();newRange.selectNodeContents(element);
+    selection.removeAllRanges();selection.addRange(newRange);saved=newRange.cloneRange();
+    after();closePopup();say(which==='all'?'Full box applied to selected text':'Selected-text '+which+' border applied');
+  }
+  function removeTextBorder(){
+    var range=selectedTextRange();
+    if(!range){say('Highlight text with a text border first.');closePopup();return}
+    var candidates=Array.from(page.querySelectorAll('span[data-writer-text-border="1"]')).filter(function(el){return range.intersectsNode(el)});
+    if(!candidates.length){say('No text border found in the selection.');closePopup();return}
+    candidates.forEach(function(el){
+      var parent=el.parentNode;if(!parent)return;
+      // Keep text styling and contents. The wrapper only holds the border itself.
+      while(el.firstChild)parent.insertBefore(el.firstChild,el);
+      el.remove();
+    });
+    saved=null;after();closePopup();say('Removed selected text border');
+  }
+  $('bordersmenu').querySelectorAll('[data-text-border]').forEach(function(b){b.addEventListener('click',function(){insertTextBorder(this.dataset.textBorder)})});
+  $('removetextborder').addEventListener('click',removeTextBorder);
   $('bordersmenu').querySelectorAll('[data-border]').forEach(function(b){b.addEventListener('click',function(){applyBorders(this.dataset.border)})});
 
   document.querySelectorAll('#ribbon button').forEach(function(b){b.addEventListener('mousedown',function(e){e.preventDefault()})});
