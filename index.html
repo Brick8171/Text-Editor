@@ -131,12 +131,15 @@ select{height:24px;border:1px solid var(--fieldline);border-radius:2px;backgroun
   body{display:block;background:#fff}
   #top,#ribbon,#linkbar,#notice,#status,#ruler{display:none!important}
   #scroll{overflow:visible;padding:0}
-  #wrap{zoom:1!important}
+  #wrap{display:block!important;zoom:1!important}
   /* Browser-generated titles/URLs need a zero-margin CSS page.
      Keep the chosen document margins INSIDE the printed page instead. */
   #page{display:block!important;width:auto!important;min-height:0;padding:0!important;background:none!important;box-shadow:none!important}
   #page > .writer-sheet{display:block!important;width:auto!important;height:auto!important;min-height:0!important;margin:0!important;box-shadow:none!important;outline:none!important;break-after:page;page-break-after:always;overflow:visible!important}
   #page > .writer-sheet:last-child{break-after:auto;page-break-after:auto}
+  /* Blank trailing editor sheets are hidden only while printing. */
+  #page > .writer-sheet.writer-print-empty{display:none!important;break-after:auto!important;page-break-after:auto!important}
+  #page > .writer-sheet.writer-print-last{break-after:auto!important;page-break-after:auto!important}
   @page{size:A4 portrait;margin:0}
 }
 
@@ -2082,7 +2085,35 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   });
   window.addEventListener('focus',function(){if(refreshDateFields()){count();persist()}});
   document.addEventListener('visibilitychange',function(){if(!document.hidden&&refreshDateFields()){count();persist()}});
-  window.addEventListener('beforeprint',function(){refreshDateFields()});
+  /* Do not include trailing blank sheets in Print / Save as PDF. Blank lines,
+     empty paragraphs and page-break placeholders are not document content.
+     Preserve an intentional blank page in the middle, and always print at
+     least one sheet. These classes never change the editable document. */
+  function writerSheetHasPrintableContent(sheet){
+    if((sheet.textContent||'').replace(/[\u200b\u200c\u200d\ufeff]/g,'').trim())return true;
+    if(sheet.querySelector('img,table,svg,canvas,video,iframe,object,embed,hr:not(.pb)'))return true;
+    // A border or filled shape can still be meaningful without any text.
+    if(sheet.querySelector('[style*="border"],[style*="background-color"]'))return true;
+    return false;
+  }
+  function writerClearPrintSheets(){
+    sheetNodes().forEach(function(sheet){
+      sheet.classList.remove('writer-print-empty','writer-print-last');
+    });
+  }
+  function writerPreparePrintSheets(){
+    writerClearPrintSheets();
+    // A pending keystroke or page break must be reflected in the printed PDF.
+    if(pageRequest!==null){cancelAnimationFrame(pageRequest);pageRequest=null;paginate(false)}
+    var sheets=sheetNodes(),end=sheets.length-1;
+    while(end>0&&!writerSheetHasPrintableContent(sheets[end])){
+      sheets[end].classList.add('writer-print-empty');
+      end--;
+    }
+    if(sheets[end])sheets[end].classList.add('writer-print-last');
+  }
+  window.addEventListener('beforeprint',function(){refreshDateFields();writerPreparePrintSheets()});
+  window.addEventListener('afterprint',writerClearPrintSheets);
   setInterval(function(){if(refreshDateFields()){count();persist()}},60000);
   $('tbl').addEventListener('click',function(){saveSel();$('tablebar').classList.add('on');$('tablerows').focus()});
   $('tablecancel').addEventListener('click',function(){$('tablebar').classList.remove('on')});
