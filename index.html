@@ -7,7 +7,7 @@
 <!-- Optional online display fonts: common fonts and all editing functions still work offline. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=Roboto:wght@400;700&amp;family=Open+Sans:wght@400;700&amp;family=Lato:wght@400;700&amp;family=Montserrat:wght@400;700&amp;family=Poppins:wght@400;700&amp;family=Nunito:wght@400;700&amp;family=Raleway:wght@400;700&amp;family=Oswald:wght@400;700&amp;family=Quicksand:wght@400;700&amp;family=Work+Sans:wght@400;700&amp;family=DM+Sans:wght@400;700&amp;family=Rubik:wght@400;700&amp;family=Archivo:wght@400;700&amp;family=Barlow:wght@400;700&amp;family=Ubuntu:wght@400;700&amp;family=Fira+Sans:wght@400;700&amp;family=Source+Sans+3:wght@400;700&amp;family=Merriweather:wght@400;700&amp;family=Playfair+Display:wght@400;700&amp;family=Libre+Baskerville:wght@400;700&amp;family=PT+Serif:wght@400;700&amp;family=Fira+Code:wght@400;700&amp;family=Caveat:wght@400;700&amp;family=Dancing+Script:wght@400;700&amp;family=Pacifico&amp;family=Bebas+Neue&amp;family=Lobster&amp;family=Cinzel:wght@400;700&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=Roboto:wght@400;700&amp;family=Open+Sans:wght@400;700&amp;family=Lato:wght@400;700&amp;family=Montserrat:wght@400;700&amp;family=Poppins:wght@400;700&amp;family=Nunito:wght@400;700&amp;family=Raleway:wght@400;700&amp;family=Oswald:wght@400;700&amp;family=Quicksand:wght@400;700&amp;family=Work+Sans:wght@400;700&amp;family=DM+Sans:wght@400;700&amp;family=Rubik:wght@400;700&amp;family=Archivo:wght@400;700&amp;family=Barlow:wght@400;700&amp;family=Ubuntu:wght@400;700&amp;family=Fira+Sans:wght@400;700&amp;family=Source+Sans+3:wght@400;700&amp;family=Merriweather:wght@400;700&amp;family=Playfair+Display:wght@400;700&amp;family=Libre+Baskerville:wght@400;700&amp;family=PT+Serif:wght@400;700&amp;family=Fira+Code:wght@400;700&amp;family=Caveat:wght@400;700&amp;family=Dancing+Script:wght@400;700&amp;family=Pacifico&amp;family=Bebas+Neue&amp;family=Lobster&amp;family=Cinzel:wght@400;700&amp;display=swap" media="print" onload="this.media='all'">
 <style>
 :root{
   box-sizing:border-box;
@@ -321,12 +321,41 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
   :root[data-theme="kitty"] #page > .writer-sheet{box-shadow:none!important;outline:none!important}
 }
 
+
+
+/* Language and proofreading: never part of the editable document or PDF. */
+#p-review select,#ui-language{min-width:150px;max-width:200px;height:29px}
+#grammar-panel{display:none;flex:none;background:var(--rib);border-bottom:1px solid var(--ribline);color:var(--text);padding:12px 16px;max-height:min(52vh,480px);overflow-y:auto;text-align:left;font:12px/1.45 "Segoe UI",system-ui,sans-serif;gap:9px;flex-direction:column}
+#grammar-panel.open{display:flex}
+.grammar-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.grammar-top strong{font-size:15px}
+#grammar-close{border:0;background:transparent;color:var(--text);font-size:16px;cursor:pointer}
+.grammar-control{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grammar-control select{min-width:190px}
+.grammar-consent{display:flex;align-items:flex-start;gap:8px;max-width:760px;cursor:pointer}
+.grammar-consent input{accent-color:var(--blue);margin-top:2px;flex:none}
+.grammar-actions{display:flex;gap:8px;flex-wrap:wrap}
+.grammar-actions button,.grammar-issue button{background:var(--field);color:var(--text);border:1px solid var(--fieldline);border-radius:5px;padding:6px 10px;cursor:pointer;font:inherit}
+.grammar-actions .grammar-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.grammar-actions button:disabled{opacity:.5;cursor:wait}
+#grammar-privacy{color:var(--muted);margin:0;max-width:830px;font-size:11px}
+#grammar-privacy a{color:inherit;text-decoration:underline}
+#grammar-status{color:var(--muted);min-height:16px}
+#grammar-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:9px;max-width:1100px}
+.grammar-issue{background:var(--field);border:1px solid var(--ribline);border-radius:7px;padding:9px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.grammar-issue .grammar-context{overflow-wrap:anywhere;color:var(--muted)}
+.grammar-issue mark{background:#ffd68a;color:#372b11;border-radius:2px;padding:0 1px}
+.grammar-issue .grammar-suggestion{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.grammar-issue button:hover{background:var(--hover)}
+::highlight(writer-grammar-hits){background:rgba(255,170,120,.35);text-decoration:underline wavy #d56b2f}
+::highlight(writer-grammar-current){background:rgba(255,177,61,.75)}
+@media print{#grammar-panel{display:none!important}}
 </style>
 </head>
 <body>
 <div id="top">
   <div id="title"><span class="app">📝 Writer</span><span id="kitty-mascot" aria-hidden="true"><svg viewBox="0 0 74 62" xmlns="http://www.w3.org/2000/svg"><path d="M11 20 7 4 24 12Q37 8 50 12L67 4 63 21C72 31 70 48 58 54Q37 64 16 54C4 47 3 31 11 20Z" fill="#fff" stroke="#b56484" stroke-width="1.5"/><g fill="none" stroke="#81536b" stroke-width="1.9" stroke-linecap="round"><path d="M20 36 5 32M20 42 4 43M54 36 69 32M54 42 70 43"/></g><ellipse cx="26" cy="34" rx="2.3" ry="3.1" fill="#533a47"/><ellipse cx="49" cy="34" rx="2.3" ry="3.1" fill="#533a47"/><ellipse cx="37.5" cy="41" rx="4.3" ry="3" fill="#f6d05d"/><path d="M46 15C36 2 32 8 35 18 25 7 22 18 35 25L40 21C51 27 62 18 50 12Z" fill="#f04e86" stroke="#d94078" stroke-width="1"/><circle cx="40" cy="18" r="4.4" fill="#ffb0cd" stroke="#d94078" stroke-width="1"/></svg></span><input id="docname" value="Document1" aria-label="Document name"></div>
-  <div id="tabs"><button data-tab="file">File</button><button class="on" data-tab="home">Home</button><button data-tab="insert">Insert</button><button data-tab="layout">Layout</button><button data-tab="view">View</button><button data-tab="picture" id="picture-tab" aria-label="Picture formatting">Picture</button></div>
+  <div id="tabs"><button data-tab="file">File</button><button class="on" data-tab="home">Home</button><button data-tab="insert">Insert</button><button data-tab="layout">Layout</button><button data-tab="view">View</button><button data-tab="review">Review</button><button data-tab="picture" id="picture-tab" aria-label="Picture formatting">Picture</button></div>
 </div>
 
 <div id="ribbon">
@@ -397,9 +426,25 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="z100"><span data-ic="zoom"></span>100%</button><button class="big" id="zfit"><span data-ic="fit"></span>Fit width</button></div></div><div class="lbl">Zoom</div></div>
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="rulerbtn"><span data-ic="ruler"></span>Ruler</button><button class="big" id="guidebtn"><span data-ic="pagebreak"></span>Page guides</button></div></div><div class="lbl">Show</div></div>
     <div class="grp"><div class="body"><div class="row"><select id="pagepreview" title="Adjust only how Word lines fit on screen; DOCX spacing stays unchanged" aria-label="Word page preview fit" style="min-width:155px"><option value="1.08">More room</option><option value="1.10">Slightly more room</option><option value="1.12" selected>Word-like (default)</option><option value="1.14">Slightly tighter</option><option value="1.16">Tighter fit</option></select></div></div><div class="lbl">Page preview fit</div></div>
+    <div class="grp"><div class="body"><div class="row"><select id="ui-language" title="Writer interface language" aria-label="Interface language"><option value="en">English</option><option value="de">Deutsch</option></select></div></div><div class="lbl">Interface language</div></div>
     <div class="grp" style="border-right:0"><div class="body"><div class="bigrow"><button class="big" id="theme"><span data-ic="moon"></span>Dark / light</button><button class="big" id="kitty-theme" title="Toggle the pink Hello Kitty theme" aria-pressed="false"><span data-ic="bow"></span>Hello Kitty</button><button class="big" id="help" title="Keyboard shortcuts"><span data-ic="help"></span>Help</button></div></div><div class="lbl">Appearance</div></div>
   </div>
+  <!-- REVIEW -->
+  <div class="panel" id="p-review">
+    <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="grammar-open" title="Review grammar and spelling"><span data-ic="checktext"></span>Grammar Check</button></div></div><div class="lbl">Proofreading</div></div>
+    <div class="grp"><div class="body"><div class="row"><select id="proof-language" aria-label="Document proofreading language" title="Choose the language of the document"><option value="de-AT">Deutsch (Österreich)</option><option value="de-DE">Deutsch (Deutschland)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select></div></div><div class="lbl">Document language</div></div>
+    <div class="grp" style="border-right:0"><div class="body"><div class="bigrow"><button class="big" id="grammar-run" title="Check spelling and grammar"><span data-ic="search"></span>Check Now</button></div></div><div class="lbl">Tools</div></div>
+  </div>
 </div>
+<section id="grammar-panel" aria-label="Grammar checker" aria-live="off">
+  <div class="grammar-top"><strong id="grammar-heading">Grammar &amp; Spelling</strong><button id="grammar-close" aria-label="Close grammar checker" type="button">✕</button></div>
+  <label class="grammar-control"><span id="grammar-doclang-label">Document language</span><select id="grammar-lang" aria-label="Grammar checking language"><option value="de-AT">Deutsch (Österreich)</option><option value="de-DE">Deutsch (Deutschland)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select></label>
+  <label class="grammar-consent"><input id="grammar-online" type="checkbox"><span id="grammar-consent-label">Use online LanguageTool for advanced grammar checks (sends document text to LanguageTool only when you click Check).</span></label>
+  <div class="grammar-actions"><button id="grammar-check" class="grammar-primary" type="button">Check document</button><button id="grammar-clear" type="button">Clear results</button></div>
+  <p id="grammar-privacy">Offline checks stay in your browser. Online checks send document text to <a href="https://languagetool.org" target="_blank" rel="noopener noreferrer">LanguageTool</a>; don't enable this for confidential documents. The free service has size/rate limits.</p>
+  <div id="grammar-status" role="status">Select a language, then check your document.</div>
+  <div id="grammar-results"></div>
+</section>
 <div id="fontpanel" class="editor-popup" role="dialog" aria-label="Font library">
   <div class="fontpanel-head"><strong>Font library</strong><span id="fonttotal"></span></div>
   <input type="search" id="fontsearch" placeholder="Search fonts, bold, italic, light…" aria-label="Search font library" autocomplete="off">
@@ -1320,6 +1365,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     calendar:'<rect x="2" y="3" width="12" height="11" rx="1"/><path d="M5 1.5v3M11 1.5v3M2 6.5h12M5 9h2M9 9h2M5 11.5h2"/>',
     spacing:'<path d="M3 2v12M1 4l2-2 2 2M1 12l2 2 2-2M7 4h8M7 7h8M7 10h8M7 13h8"/>',
     paintbrush:'<path d="M12.8 2.2l1 1a1 1 0 010 1.4L7.5 10.9 5.1 8.5l6.3-6.3a1 1 0 011.4 0z"/><path d="M4.7 9l2.3 2.3c0 2.4-1.3 3.5-3.9 3.5-1.2 0-1.6-.6-1.9-1.1 1.5-.4 2.2-1.3 2.2-2.5C3.4 10.1 3.8 9.4 4.7 9z"/>',
+    checktext:'<rect x="2" y="3" width="11" height="11" rx="1"/><path d="M4 6h5M4 8.5h4M5.5 11l1.5 1.5 3-3"/>',
     borders:'<rect x="2" y="2" width="12" height="12"/><path d="M8 2v12M2 8h12"/>'
   };
   document.querySelectorAll('[data-ic]').forEach(function(e){
@@ -2650,7 +2696,14 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
         if(ext)bytes=toBytes(m[2]);
         else{var c=document.createElement('canvas');c.width=sz.w;c.height=sz.h;c.getContext('2d').drawImage(img,0,0,sz.w,sz.h);bytes=toBytes(c.toDataURL('image/png').split(',')[1]);ext='png'}
         var w=img.offsetWidth||sz.w,h=img.offsetHeight||sz.h;
-        if(w>624){h=h*624/w;w=624}
+        // Export inline images to the selected page's *actual text area*.
+        // The old 624px limit exceeded the writable width of A4 at 1-inch
+        // margins (about 602px), so Word could push the image or text to
+        // another page. Positioned pictures may overlap margins intentionally.
+        var box=layoutTwips(),left=box.left||box.margin,right=box.right||box.margin;
+        var maxWidth=Math.max(90,(box.w-left-right)/15);
+        if(img.style.position==='absolute')maxWidth=Math.max(maxWidth,box.w/15);
+        if(w>maxWidth){h=h*maxWidth/w;w=maxWidth}
         map.set(img,{ext:ext,bytes:bytes,w:Math.max(8,w),h:Math.max(8,h)});
       });
     })).then(function(){return map});
@@ -2716,6 +2769,244 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   $('z100').addEventListener('click',function(){setZ(100)});
   $('zfit').addEventListener('click',function(){userZoom=null;fit()});
   addEventListener('resize',fit);
+
+  /* Writer UI translation and independent document-proofing language. */
+  var writerLang=load('writer-ui-lang')||((navigator.language||'').toLowerCase().startsWith('de')?'de':'en');
+  var proofLang=load('writer-proof-lang')||(writerLang==='de'?'de-AT':'en-US');
+  var WRITER_DE={
+    'File':'Datei','Home':'Start','Insert':'Einfügen','Layout':'Layout','View':'Ansicht','Review':'Überprüfen','Picture':'Bild',
+    'New':'Neu','Open':'Öffnen','Document':'Dokument','Save':'Speichern','Print':'Drucken','Print / PDF':'Drucken / PDF','Text':'Text',
+    'Undo':'Rückgängig','Redo':'Wiederholen','Clipboard':'Zwischenablage','Format Painter':'Format übertragen',
+    'Font':'Schriftart','Paragraph':'Absatz','Styles':'Formatvorlagen','Normal':'Standard','Heading 1':'Überschrift 1','Heading 2':'Überschrift 2','Heading 3':'Überschrift 3','Quote':'Zitat',
+    'Bullets':'Aufzählungszeichen','Numbering':'Nummerierung','Increase indent':'Einzug vergrößern','Decrease indent':'Einzug verkleinern',
+    'Tables':'Tabellen','Table':'Tabelle','Add row':'Zeile einfügen','Add column':'Spalte einfügen','Delete table':'Tabelle löschen',
+    'Picture Style':'Bildformat','Picture Styles':'Bildformatvorlagen','Illustrations':'Illustrationen','Links':'Links','Link':'Link','Pages':'Seiten','Page break':'Seitenumbruch',
+    'Date & Time':'Datum & Uhrzeit','Zoom':'Zoom','100%':'100 %','Fit width':'Breite anpassen','Show':'Anzeigen','Ruler':'Lineal','Page guides':'Seitenhilfslinien',
+    'More room':'Mehr Platz','Slightly more room':'Etwas mehr Platz','Word-like (default)':'Wie Word (Standard)',
+    'Slightly tighter':'Etwas enger','Tighter fit':'Engere Darstellung','Page preview fit':'Seitenvorschau anpassen',
+    'Dark / light':'Dunkel / Hell','Hello Kitty':'Hello Kitty','Help':'Hilfe','Appearance':'Darstellung',
+    'Interface language':'Oberflächensprache','Document language':'Dokumentsprache','Proofreading':'Textprüfung','Tools':'Werkzeuge',
+    'Grammar Check':'Grammatikprüfung','Check Now':'Jetzt prüfen','Grammar & Spelling':'Grammatik und Rechtschreibung',
+    'Check document':'Dokument prüfen','Clear results':'Ergebnisse löschen',
+    'Use online LanguageTool for advanced grammar checks (sends document text to LanguageTool only when you click Check).':'LanguageTool für gründliche Onlineprüfung verwenden (Text wird nur nach Klick auf „Prüfen“ übermittelt).',
+    'Offline checks stay in your browser. Online checks send document text to':'Offlineprüfungen bleiben im Browser. Onlineprüfungen senden den Text an',
+    "don't enable this for confidential documents. The free service has size/rate limits.":'Nicht für vertrauliche Dokumente aktivieren. Für den kostenlosen Dienst gelten Größen- und Häufigkeitsgrenzen.',
+    'Select a language, then check your document.':'Sprache auswählen und Dokument prüfen.',
+    'Select a language, then check your document':'Sprache auswählen und Dokument prüfen',
+    'Font library':'Schriftbibliothek','Matching fonts':'Passende Schriftarten','Search fonts, bold, italic, light…':'Schriftarten, fett, kursiv, dünn suchen …',
+    'Choose a font to apply it to the selection.':'Schriftart auswählen, um sie anzuwenden.',
+    'Line spacing':'Zeilenabstand','1.0 — Single':'1,0 — Einfach','1.15 — Word default':'1,15 — Word-Standard','2.0 — Double':'2,0 — Doppelt','3.0 — Triple':'3,0 — Dreifach',
+    'Add Space Before Paragraph':'Abstand vor Absatz hinzufügen','Add Space After Paragraph':'Abstand nach Absatz hinzufügen',
+    'No Spacing (0 pt)':'Kein Abstand (0 pt)','Custom paragraph spacing':'Benutzerdefinierter Absatzabstand',
+    'Before (pt)':'Vorher (pt)','After (pt)':'Nachher (pt)','Apply spacing':'Abstand anwenden',
+    'Borders':'Rahmen','Apply to':'Anwenden auf','Selected text only':'Nur markierter Text','Paragraph / table cell':'Absatz / Tabellenzelle',
+    'Paragraph and table borders':'Absatz- und Tabellenrahmen','▣ Full Box':'▣ Vollständiger Rahmen',
+    'Top Border':'Oberer Rahmen','Bottom Border':'Unterer Rahmen','Left Border':'Linker Rahmen','Right Border':'Rechter Rahmen',
+    'Outside Borders':'Außenrahmen','No Border':'Kein Rahmen','Border around highlighted text':'Rahmen um markierten Text',
+    '▣ Full Box — Selected Text':'▣ Rahmen — Auswahl','Top Only':'Nur oben','Bottom Only':'Nur unten','Left Only':'Nur links','Right Only':'Nur rechts',
+    'No Text Border':'Kein Textrahmen','Border options':'Rahmeneinstellungen','Line width':'Linienbreite','Line color':'Linienfarbe',
+    'Selected text borders stay around the words. Paragraph borders extend across the paragraph. Word DOCX supports full character boxes; individual character sides may display as a box in Word.':'Textrahmen umschließen nur die Wörter. Absatzrahmen reichen bis zum rechten Rand. Word kann einzelne Textrahmenseiten als vollständigen Rahmen anzeigen.',
+    '↑ Previous':'↑ Zurück','↓ Next':'↓ Weiter','Replace':'Ersetzen','Replace all':'Alle ersetzen',
+    'Insert table:':'Tabelle einfügen:','Rows':'Zeilen','Columns':'Spalten','Insert table':'Tabelle einfügen','Cancel':'Abbrechen',
+    'Insert':'Einfügen','Close':'Schließen','Apply Crop':'Zuschnitt anwenden','Crop Picture':'Bild zuschneiden',
+    'Enter the percentage to trim from each edge. Cropping is applied to the picture itself.':'Gib den Prozentsatz für den Zuschnitt jeder Seite ein.',
+    'Left (%)':'Links (%)','Right (%)':'Rechts (%)','Top (%)':'Oben (%)','Bottom (%)':'Unten (%)',
+    'Insert Date & Time':'Datum und Uhrzeit einfügen','Choose how the current date appears in your document.':'Wähle das Datumsformat.',
+    'Update automatically':'Automatisch aktualisieren','Preview':'Vorschau','Writer keyboard shortcuts':'Writer-Tastenkombinationen',
+    'Saved locally':'Lokal gespeichert','More fonts (online)':'Weitere Schriften (online)','Office & system fonts':'Office- und Systemschriften',
+    'In Line with Text':'Mit Text in Zeile','Behind Text':'Hinter den Text','In Front of Text':'Vor den Text',
+    'Square — Left':'Quadrat — links','Square — Right':'Quadrat — rechts','Wrap & Align':'Umbruch und Ausrichtung',
+    'Align: Default':'Standardausrichtung','Align Left':'Linksbündig','Align Center':'Zentriert','Align Right':'Rechtsbündig',
+    'Size':'Größe','Width':'Breite','Height':'Höhe','Border':'Rahmen','None':'Keiner','Thin':'Dünn','Medium':'Mittel','Thick':'Dick',
+    'Delete':'Löschen','Crop':'Zuschneiden','Rotate':'Drehen','Left':'Links','Right':'Rechts','Center':'Mitte',
+    'Bold':'Fett','Italic':'Kursiv','Underline':'Unterstrichen','Find':'Suchen','Find / Replace':'Suchen / Ersetzen',
+    'Editing':'Bearbeiten','Orientation':'Ausrichtung','Paper':'Papier','Margins':'Seitenränder','Page setup':'Seite einrichten',
+    'Portrait':'Hochformat','Landscape':'Querformat','US Letter':'US Letter','US Legal':'US Legal',
+    'Normal (1 in)':'Normal (2,54 cm)','Moderate (0.75 in)':'Mittel (1,9 cm)','Narrow (0.5 in)':'Schmal (1,27 cm)',
+    'Single':'Einfach','Double':'Doppelt','Triple (3)':'Dreifach (3)','Spacing':'Abstand',
+    'Adjust':'Anpassen','Rotate +90°':'90° rechts drehen','Rotate −90°':'90° links drehen','Flip H':'Horizontal spiegeln',
+    'Download .docx':'DOCX herunterladen','Insert link':'Link einfügen','Find and replace':'Suchen und ersetzen',
+    'New page (page break)':'Neue Seite (Seitenumbruch)',
+    'Files are saved locally in this browser, with offline Word export and import. Complex Word layouts may be simplified.':'Dateien werden lokal in diesem Browser gespeichert. Word-Dateien lassen sich offline importieren und exportieren. Komplexe Word-Layouts können abweichen.',
+    'Word .docx':'Word .docx','Picture formatting':'Bildformatierung','Check grammar and spelling':'Grammatik und Rechtschreibung prüfen',
+    'Review grammar and spelling':'Grammatik und Rechtschreibung prüfen',
+    'Document proofreading language':'Dokumentsprache für die Textprüfung',
+    'Grammar checking language':'Grammatikprüfungssprache','Writer interface language':'Sprache der Writer-Oberfläche',
+    'Image crop preview':'Bildzuschnittvorschau'
+  };
+  function uiT(str){return writerLang==='de'?(WRITER_DE[str]||str):str}
+  // Keep original strings on text nodes and attributes so switching never stacks translations.
+  var writerUiNodes=[],writerUiAttrs=[];
+  function collectUiTranslations(){
+    var roots=['#top','#ribbon','#fontpanel','#spacingmenu','#bordersmenu','#findbar','#tablebar','#linkbar','#notice','#status','#crop-dialog','#date-dialog','#help-dialog','#grammar-panel'];
+    roots.forEach(function(sel){var root=document.querySelector(sel);if(!root)return;
+      var walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),node;
+      while((node=walker.nextNode())){
+        var original=node.nodeValue,key=original.trim();
+        if(key&&WRITER_DE[key]&&node.parentElement&&!node.parentElement.closest('svg,style,script,#fontresults,#msg,#nmsg,#findcount,#grammar-results,#grammar-status,#fonttotal,#date-preview,#pg,#words,#chars'))writerUiNodes.push({node:node,raw:original,key:key});
+      }
+      root.querySelectorAll('*').forEach(function(el){
+        for(var name of ['title','aria-label','placeholder']){
+          if(el.hasAttribute(name)){var val=el.getAttribute(name);if(WRITER_DE[val])writerUiAttrs.push({el:el,name:name,raw:val})}
+        }
+      });
+    });
+  }
+  function renderUiLanguage(){
+    document.documentElement.lang=writerLang;
+    $('ui-language').value=writerLang;
+    writerUiNodes.forEach(function(i){i.node.nodeValue=writerLang==='de'?i.raw.replace(i.key,WRITER_DE[i.key]):i.raw});
+    writerUiAttrs.forEach(function(i){i.el.setAttribute(i.name,uiT(i.raw))});
+    if($('grammar-heading'))$('grammar-heading').textContent=uiT('Grammar & Spelling');
+    if($('grammar-consent-label'))$('grammar-consent-label').textContent=uiT('Use online LanguageTool for advanced grammar checks (sends document text to LanguageTool only when you click Check).');
+    if($('grammar-doclang-label'))$('grammar-doclang-label').textContent=uiT('Document language');
+    if($('grammar-privacy'))$('grammar-privacy').innerHTML=writerLang==='de'
+      ? 'Offlineprüfungen bleiben im Browser. Onlineprüfungen senden den Dokumenttext an <a href="https://languagetool.org" target="_blank" rel="noopener noreferrer">LanguageTool</a>. Nicht für vertrauliche Dokumente aktivieren; es gelten Größen- und Häufigkeitsgrenzen.'
+      : 'Offline checks stay in your browser. Online checks send document text to <a href="https://languagetool.org" target="_blank" rel="noopener noreferrer">LanguageTool</a>; don\'t enable this for confidential documents. The free service has size/rate limits.';
+    if($('grammar-results').children.length)renderGrammarIssues();
+  }
+  function setProofLang(lang){
+    if(!['de-AT','de-DE','en-US','en-GB'].includes(lang))lang='en-US';
+    proofLang=lang;store('writer-proof-lang',lang);
+    $('proof-language').value=lang;$('grammar-lang').value=lang;
+    page.lang=lang;page.setAttribute('spellcheck','true');
+    page.querySelectorAll('.writer-sheet').forEach(function(sheet){sheet.lang=lang;sheet.spellcheck=true});
+    clearGrammarResults();
+  }
+  $('ui-language').addEventListener('change',function(){writerLang=this.value==='de'?'de':'en';store('writer-ui-lang',writerLang);renderUiLanguage()});
+  $('proof-language').addEventListener('change',function(){setProofLang(this.value)});
+  $('grammar-lang').addEventListener('change',function(){setProofLang(this.value)});
+
+  /* Grammar: local, deterministic rules plus a manual opt-in online check. */
+  var grammarIssues=[],grammarMapping=null,grammarSignature='',grammarHighlightSupported=!!(window.CSS&&CSS.highlights&&window.Highlight),grammarRequest=null;
+  function grammarDocumentMap(){
+    var text='',parts=[];
+    var blockSelector='p,h1,h2,h3,h4,h5,h6,blockquote,li,td,th,div';
+    var blocks=Array.from(page.querySelectorAll('.writer-sheet '+blockSelector)).filter(function(el){
+      return !el.querySelector(blockSelector)&&!el.closest('[contenteditable="false"]');
+    });
+    if(!blocks.length)blocks=sheetNodes();
+    for(var block of blocks){
+      if(text)text+='\n';
+      var walker=document.createTreeWalker(block,NodeFilter.SHOW_TEXT),node;
+      while((node=walker.nextNode())){
+        if(!node.nodeValue)continue;
+        parts.push({node:node,start:text.length,end:text.length+node.length});text+=node.nodeValue;
+      }
+    }
+    return {text:text,parts:parts};
+  }
+  function grammarRange(issue,map){
+    if(!map||map.text.slice(issue.offset,issue.offset+issue.length)!==issue.original)return null;
+    var first=map.parts.find(function(p){return p.end>issue.offset&&p.start<=issue.offset});
+    var last=map.parts.find(function(p){return p.end>=issue.offset+issue.length&&p.start<issue.offset+issue.length});
+    if(!first||!last)return null;
+    try{var r=document.createRange();r.setStart(first.node,issue.offset-first.start);r.setEnd(last.node,issue.offset+issue.length-last.start);return r}catch(e){return null}
+  }
+  function grammarLocalChecks(text){
+    var issues=[];
+    function add(match,start,length,replacement,msg){issues.push({offset:start,length:length,original:text.slice(start,start+length),message:msg,replacements:[replacement],source:'local'})}
+    var re,m;
+    re=/\b([\p{L}]{2,})(\s+)\1\b/giu;
+    while((m=re.exec(text))!==null){add(m,m.index,m[0].length,m[1],writerLang==='de'?'Wort wiederholt.':'Repeated word.');if(issues.length>150)break}
+    re=/(?<=\S) {2,}(?=\S)/g;
+    while((m=re.exec(text))!==null){add(m,m.index,m[0].length,' ',writerLang==='de'?'Mehrere Leerzeichen.':'Extra spaces.');if(issues.length>150)break}
+    re=/[,;:](?=\p{L})/gu;
+    while((m=re.exec(text))!==null){add(m,m.index,1,m[0]+' ',writerLang==='de'?'Leerzeichen nach Satzzeichen fehlt.':'Missing space after punctuation.');if(issues.length>150)break}
+    if(proofLang.startsWith('en')){
+      re=/\ba\s+([aeiou]\w+)/gi;while((m=re.exec(text))!==null){if(!/^(uni|use|one)/i.test(m[1]))add(m,m.index,m[0].length,'an '+m[1],'Consider “an” before a vowel sound.')}
+      re=/\b(I)\s+(is|are)\b/g;while((m=re.exec(text))!==null)add(m,m.index,m[0].length,'I am','“I” is normally followed by “am”.');
+      re=/\b(he|she|it)\s+don't\b/gi;while((m=re.exec(text))!==null)add(m,m.index,m[0].length,m[1]+" doesn't",'Check subject–verb agreement.');
+    }
+    return issues;
+  }
+  function clearGrammarHighlights(){if(grammarHighlightSupported){CSS.highlights.delete('writer-grammar-hits');CSS.highlights.delete('writer-grammar-current')}}
+  function clearGrammarResults(){
+    grammarIssues=[];grammarMapping=null;grammarSignature='';clearGrammarHighlights();
+    $('grammar-results').replaceChildren();
+    $('grammar-status').textContent=writerLang==='de'?'Sprache auswählen und Dokument prüfen.':'Select a language, then check your document.';
+  }
+  function grammarHighlight(issue){
+    var r=grammarRange(issue,grammarMapping);if(!r)return;
+    if(grammarHighlightSupported)CSS.highlights.set('writer-grammar-current',new Highlight(r));
+    var rect=r.getBoundingClientRect(),sr=sc.getBoundingClientRect();
+    if(rect.top<sr.top||rect.bottom>sr.bottom)sc.scrollBy({top:rect.top-sr.top-sr.height/2,behavior:'smooth'});
+  }
+  function grammarNotice(msg){$('grammar-status').textContent=msg}
+  function renderGrammarIssues(){
+    var list=$('grammar-results');list.replaceChildren();
+    if(!grammarIssues.length){grammarNotice(writerLang==='de'?'Keine Auffälligkeiten gefunden.':'No issues found.');return}
+    grammarNotice(grammarIssues.length+(writerLang==='de'?' mögliche Auffälligkeit(en).':' possible issue(s).'));
+    grammarIssues.slice(0,120).forEach(function(issue,index){
+      var card=document.createElement('article');card.className='grammar-issue';
+      var description=document.createElement('strong');description.textContent=issue.message;card.appendChild(description);
+      var snippet=document.createElement('div');snippet.className='grammar-context';
+      var a=Math.max(0,issue.offset-34),b=Math.min(grammarSignature.length,issue.offset+issue.length+34);
+      snippet.appendChild(document.createTextNode((a?'…':'')+grammarSignature.slice(a,issue.offset)));
+      var mark=document.createElement('mark');mark.textContent=issue.original;snippet.appendChild(mark);
+      snippet.appendChild(document.createTextNode(grammarSignature.slice(issue.offset+issue.length,b)+(b<grammarSignature.length?'…':'')));
+      card.appendChild(snippet);
+      var actions=document.createElement('div');actions.className='grammar-suggestion';
+      var jump=document.createElement('button');jump.type='button';jump.textContent=writerLang==='de'?'Anzeigen':'Show';jump.addEventListener('click',function(){grammarHighlight(issue)});actions.appendChild(jump);
+      issue.replacements.slice(0,3).forEach(function(s){var btn=document.createElement('button');btn.type='button';btn.textContent=(writerLang==='de'?'Ersetzen: ':'Replace: ')+s;
+        btn.addEventListener('click',function(){
+          // Recalculate after pagination in case text nodes moved or split.
+          var current=grammarDocumentMap();
+          if(current.text!==grammarSignature){grammarNotice(writerLang==='de'?'Text hat sich geändert. Bitte erneut prüfen.':'Text changed. Please check again.');clearGrammarHighlights();return}
+          var r=grammarRange(issue,current);if(!r)return;
+          writerHistoryBegin();
+          r.deleteContents();
+          var replacement=document.createTextNode(s);r.insertNode(replacement);
+          var caret=document.createRange();caret.setStart(replacement,replacement.length);caret.collapse(true);
+          var selection=getSelection();selection.removeAllRanges();selection.addRange(caret);
+          saved=caret.cloneRange();
+          after();clearGrammarResults();grammarNotice(writerLang==='de'?'Ersetzung angewendet. Für weitere Vorschläge erneut prüfen.':'Applied. Run the check again for updated suggestions.');
+        });actions.appendChild(btn)});
+      var ignore=document.createElement('button');ignore.type='button';ignore.textContent=writerLang==='de'?'Ignorieren':'Ignore';ignore.addEventListener('click',function(){grammarIssues.splice(grammarIssues.indexOf(issue),1);renderGrammarIssues()});actions.appendChild(ignore);
+      card.appendChild(actions);list.appendChild(card);
+    });
+  }
+  async function runGrammarCheck(){
+    if(grammarRequest){grammarRequest.abort();grammarRequest=null}
+    var snapshot=grammarDocumentMap(),text=snapshot.text;
+    clearGrammarResults();
+    if(!text.trim()){grammarNotice(writerLang==='de'?'Das Dokument ist leer.':'The document is empty.');return}
+    var local=grammarLocalChecks(text),online=$('grammar-online').checked;
+    var matches=[],onlineWarning='';
+    if(online){
+      if(new TextEncoder().encode(text).length>18000){onlineWarning=writerLang==='de'?'Onlineprüfung: Text zu lang (max. ca. 18 KB); nur Offline-Ergebnisse.':'Online check: text too long (about 18 KB limit); local results only.';grammarNotice(onlineWarning);}
+      else{
+        var ctrl=new AbortController();grammarRequest=ctrl;
+        $('grammar-check').disabled=true;grammarNotice(writerLang==='de'?'LanguageTool prüft den Text …':'Checking with LanguageTool…');
+        var timeout=setTimeout(function(){ctrl.abort()},15000);
+        try{
+          var response=await fetch('https://api.languagetool.org/v2/check',{method:'POST',body:new URLSearchParams({text:text,language:proofLang}),signal:ctrl.signal});
+          if(!response.ok)throw Error('HTTP '+response.status);
+          var json=await response.json();matches=Array.isArray(json.matches)?json.matches:[];
+        }catch(e){onlineWarning=(writerLang==='de'?'Onlineprüfung nicht verfügbar (':'Online check unavailable (')+(e.name==='AbortError'?'timeout':e.message)+'). '+(writerLang==='de'?'Nur Offline-Ergebnisse.':'Local results only.');grammarNotice(onlineWarning);}
+        finally{clearTimeout(timeout);if(grammarRequest===ctrl)grammarRequest=null;$('grammar-check').disabled=false}
+      }
+    }
+    if(grammarDocumentMap().text!==text){grammarNotice(writerLang==='de'?'Dokument wurde während der Prüfung geändert. Bitte erneut prüfen.':'Document changed during the check. Please run it again.');return}
+    grammarMapping=snapshot;grammarSignature=text;
+    var incoming=matches.map(function(m){
+      return {offset:m.offset,length:m.length,original:text.slice(m.offset,m.offset+m.length),message:m.message||'Check grammar',replacements:(m.replacements||[]).slice(0,5).map(function(a){return a.value}).filter(function(x){return typeof x==='string'}),source:'online'};
+    }).filter(function(m){return m.offset>=0&&m.length>0&&m.offset+m.length<=text.length});
+    grammarIssues=incoming.concat(local.filter(function(item){return !incoming.some(function(m){return item.offset<m.offset+m.length&&m.offset<item.offset+item.length})})).sort(function(a,b){return a.offset-b.offset}).slice(0,200);
+    if(grammarHighlightSupported){var ranges=grammarIssues.slice(0,120).map(function(issue){return grammarRange(issue,snapshot)}).filter(Boolean);CSS.highlights.set('writer-grammar-hits',new Highlight(...ranges))}
+    renderGrammarIssues();
+    if(onlineWarning)$('grammar-status').textContent=onlineWarning+' '+grammarIssues.length+(writerLang==='de'?' Hinweis(e).':' issue(s).');
+  }
+  function toggleGrammarPanel(open){$('grammar-panel').classList.toggle('open',open);if(open){$('grammar-lang').value=proofLang} else clearGrammarHighlights()}
+  $('grammar-open').addEventListener('click',function(){toggleGrammarPanel(!$('grammar-panel').classList.contains('open'))});
+  $('grammar-run').addEventListener('click',function(){toggleGrammarPanel(true);runGrammarCheck()});
+  $('grammar-check').addEventListener('click',runGrammarCheck);
+  $('grammar-clear').addEventListener('click',clearGrammarResults);
+  $('grammar-close').addEventListener('click',function(){toggleGrammarPanel(false)});
+  page.addEventListener('input',function(){if(grammarIssues.length){clearGrammarResults();grammarNotice(writerLang==='de'?'Text geändert – bitte erneut prüfen.':'Text changed — run the check again.')}});
+  collectUiTranslations();
+  renderUiLanguage();
+  setProofLang(proofLang);
 
   refreshDateFields();applyLayout();fit();schedulePaginate(true);state();count();writerHistoryReset();
 })();
