@@ -333,6 +333,8 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
 .grammar-control{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .grammar-control select{min-width:190px}
 .grammar-consent{display:flex;align-items:flex-start;gap:8px;max-width:760px;cursor:pointer}
+.grammar-live-switch{display:flex;align-items:center;gap:7px;max-width:160px;cursor:pointer;font-size:11px;line-height:1.3;color:var(--text)}
+.grammar-live-switch input{accent-color:var(--blue);cursor:pointer;flex:none}
 .grammar-consent input{accent-color:var(--blue);margin-top:2px;flex:none}
 .grammar-actions{display:flex;gap:8px;flex-wrap:wrap}
 .grammar-actions button,.grammar-issue button{background:var(--field);color:var(--text);border:1px solid var(--fieldline);border-radius:5px;padding:6px 10px;cursor:pointer;font:inherit}
@@ -347,7 +349,11 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
 .grammar-issue mark{background:#ffd68a;color:#372b11;border-radius:2px;padding:0 1px}
 .grammar-issue .grammar-suggestion{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 .grammar-issue button:hover{background:var(--hover)}
-::highlight(writer-grammar-hits){background:rgba(255,170,120,.35);text-decoration:underline wavy #d56b2f}
+/* Non-destructive marks: never modify document text or PDF/DOCX output. */
+::highlight(writer-grammar-hits){text-decoration-line:underline;text-decoration-style:wavy;text-decoration-color:#d9193f;text-decoration-thickness:1.6px;text-underline-offset:3px}
+#writer-grammar-overlay{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
+#writer-grammar-overlay .writer-grammar-line{position:absolute;height:3px;border-bottom:2px dotted #df1740;pointer-events:none;box-sizing:border-box}
+@media print{#writer-grammar-overlay{display:none!important}::highlight(writer-grammar-hits),::highlight(writer-grammar-current){background:transparent!important;text-decoration:none!important}}
 ::highlight(writer-grammar-current){background:rgba(255,177,61,.75)}
 @media print{#grammar-panel{display:none!important}}
 </style>
@@ -433,6 +439,7 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
   <div class="panel" id="p-review">
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="grammar-open" title="Review grammar and spelling"><span data-ic="checktext"></span>Grammar Check</button></div></div><div class="lbl">Proofreading</div></div>
     <div class="grp"><div class="body"><div class="row"><select id="proof-language" aria-label="Document proofreading language" title="Choose the language of the document"><option value="de-AT">Deutsch (Österreich)</option><option value="de-DE">Deutsch (Deutschland)</option><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option></select></div></div><div class="lbl">Document language</div></div>
+    <div class="grp"><div class="body"><label class="grammar-live-switch"><input id="grammar-live" type="checkbox" checked><span>Underline as you type</span></label></div><div class="lbl">Live check</div></div>
     <div class="grp" style="border-right:0"><div class="body"><div class="bigrow"><button class="big" id="grammar-run" title="Check spelling and grammar"><span data-ic="search"></span>Check Now</button></div></div><div class="lbl">Tools</div></div>
   </div>
 </div>
@@ -1581,7 +1588,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   function schedulePaginate(force){
     if(pageRequest!==null)cancelAnimationFrame(pageRequest);
     pageRequest=requestAnimationFrame(function(){
-      pageRequest=null;paginate(!!force);count();
+      pageRequest=null;paginate(!!force);count();scheduleLiveGrammar(false);
       if(writerHistoryPending){writerHistoryCommit(writerHistoryPending);writerHistoryPending=null}
     });
   }
@@ -1719,6 +1726,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
       state&&count();persist();
     }finally{writerHistoryBusy=false}
     requestAnimationFrame(function(){positionImageHandles();followCaret(false)});
+    scheduleLiveGrammar(false);
   }
   document.addEventListener('keydown',function(e){
     if(!(e.ctrlKey||e.metaKey)||e.altKey)return;
@@ -2787,6 +2795,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     'Dark / light':'Dunkel / Hell','Hello Kitty':'Hello Kitty','Help':'Hilfe','Appearance':'Darstellung',
     'Interface language':'Oberflächensprache','Document language':'Dokumentsprache','Proofreading':'Textprüfung','Tools':'Werkzeuge',
     'Grammar Check':'Grammatikprüfung','Check Now':'Jetzt prüfen','Grammar & Spelling':'Grammatik und Rechtschreibung',
+    'Underline as you type':'Beim Schreiben unterstreichen','Live check':'Liveprüfung',
     'Check document':'Dokument prüfen','Clear results':'Ergebnisse löschen',
     'Use online LanguageTool for advanced grammar checks (sends document text to LanguageTool only when you click Check).':'LanguageTool für gründliche Onlineprüfung verwenden (Text wird nur nach Klick auf „Prüfen“ übermittelt).',
     'Offline checks stay in your browser. Online checks send document text to':'Offlineprüfungen bleiben im Browser. Onlineprüfungen senden den Text an',
@@ -2872,6 +2881,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     page.lang=lang;page.setAttribute('spellcheck','true');
     page.querySelectorAll('.writer-sheet').forEach(function(sheet){sheet.lang=lang;sheet.spellcheck=true});
     clearGrammarResults();
+    scheduleLiveGrammar(true);
   }
   $('ui-language').addEventListener('change',function(){writerLang=this.value==='de'?'de':'en';store('writer-ui-lang',writerLang);renderUiLanguage()});
   $('proof-language').addEventListener('change',function(){setProofLang(this.value)});
@@ -2879,6 +2889,70 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
 
   /* Grammar: local, deterministic rules plus a manual opt-in online check. */
   var grammarIssues=[],grammarMapping=null,grammarSignature='',grammarHighlightSupported=!!(window.CSS&&CSS.highlights&&window.Highlight),grammarRequest=null;
+  var grammarLiveTimer=null,grammarLiveEnabled=load('writer-live-grammar')!=='off',grammarPanelHasResults=false,grammarIgnored=new Set();
+  $('grammar-live').checked=grammarLiveEnabled;
+  var grammarOverlay=null,grammarOverlayFrame=null;
+  function grammarFallbackDraw(){
+    if(grammarHighlightSupported)return;
+    if(!grammarOverlay){grammarOverlay=document.createElement('div');grammarOverlay.id='writer-grammar-overlay';document.body.appendChild(grammarOverlay)}
+    grammarOverlay.replaceChildren();
+    var frame=sc.getBoundingClientRect();
+    grammarIssues.slice(0,500).forEach(function(issue){
+      var range=grammarRange(issue,grammarMapping);if(!range)return;
+      Array.from(range.getClientRects()).forEach(function(rect){
+        if(rect.bottom<frame.top||rect.top>frame.bottom||rect.width<2)return;
+        var line=document.createElement('div');line.className='writer-grammar-line';
+        line.style.left=Math.max(frame.left,rect.left)+'px';
+        line.style.top=Math.max(frame.top,Math.min(frame.bottom-3,rect.bottom-3))+'px';
+        line.style.width=Math.max(0,Math.min(frame.right,rect.right)-Math.max(frame.left,rect.left))+'px';
+        grammarOverlay.appendChild(line);
+      });
+    });
+  }
+  function grammarDrawFallbackSoon(){
+    if(grammarHighlightSupported||grammarOverlayFrame!==null)return;
+    grammarOverlayFrame=requestAnimationFrame(function(){grammarOverlayFrame=null;grammarFallbackDraw()});
+  }
+  sc.addEventListener('scroll',grammarDrawFallbackSoon,{passive:true});
+  window.addEventListener('resize',grammarDrawFallbackSoon);
+  function updateGrammarUnderlines(){
+    if(grammarHighlightSupported){
+      CSS.highlights.delete('writer-grammar-hits');
+      if(grammarIssues.length&&grammarMapping){
+        var ranges=grammarIssues.slice(0,500).map(function(issue){return grammarRange(issue,grammarMapping)}).filter(Boolean);
+        if(ranges.length)CSS.highlights.set('writer-grammar-hits',new Highlight(...ranges));
+      }
+    }else grammarDrawFallbackSoon();
+  }
+  function refreshLiveGrammar(){
+    var snapshot=grammarDocumentMap();
+    if(!snapshot.text.trim()){
+      grammarIssues=[];grammarMapping=snapshot;grammarSignature=snapshot.text;
+    }else if(snapshot.text===grammarSignature&&grammarIssues.length){
+      // Pagination moves DOM nodes; rebuild ranges while retaining any opt-in online results.
+      grammarMapping=snapshot;
+    }else{
+      grammarIgnored.clear();
+      grammarPanelHasResults=false;
+      $('grammar-results').replaceChildren();
+      grammarMapping=snapshot;grammarSignature=snapshot.text;
+      grammarIssues=grammarLiveEnabled?grammarLocalChecks(snapshot.text).slice(0,500):[];
+    }
+    if(!grammarLiveEnabled&&!grammarPanelHasResults)grammarIssues=[];
+    updateGrammarUnderlines();
+    if(grammarPanelHasResults&&$('grammar-panel').classList.contains('open'))renderGrammarIssues();
+  }
+  function scheduleLiveGrammar(now){
+    if(grammarLiveTimer!==null){clearTimeout(grammarLiveTimer);grammarLiveTimer=null}
+    if(!grammarLiveEnabled&&!grammarPanelHasResults){clearGrammarHighlights();return}
+    grammarLiveTimer=setTimeout(function(){grammarLiveTimer=null;refreshLiveGrammar()},now?0:250);
+  }
+  $('grammar-live').addEventListener('change',function(){
+    grammarLiveEnabled=this.checked;store('writer-live-grammar',grammarLiveEnabled?'on':'off');
+    grammarSignature='';grammarIssues=[];grammarPanelHasResults=false;
+    $('grammar-results').replaceChildren();clearGrammarHighlights();
+    if(grammarLiveEnabled)scheduleLiveGrammar(true);
+  });
   function grammarDocumentMap(){
     var text='',parts=[];
     var blockSelector='p,h1,h2,h3,h4,h5,h6,blockquote,li,td,th,div';
@@ -2908,11 +2982,11 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     function add(match,start,length,replacement,msg){issues.push({offset:start,length:length,original:text.slice(start,start+length),message:msg,replacements:[replacement],source:'local'})}
     var re,m;
     re=/\b([\p{L}]{2,})(\s+)\1\b/giu;
-    while((m=re.exec(text))!==null){add(m,m.index,m[0].length,m[1],writerLang==='de'?'Wort wiederholt.':'Repeated word.');if(issues.length>150)break}
+    while((m=re.exec(text))!==null){add(m,m.index,m[0].length,m[1],writerLang==='de'?'Wort wiederholt.':'Repeated word.');if(issues.length>500)break}
     re=/(?<=\S) {2,}(?=\S)/g;
-    while((m=re.exec(text))!==null){add(m,m.index,m[0].length,' ',writerLang==='de'?'Mehrere Leerzeichen.':'Extra spaces.');if(issues.length>150)break}
+    while((m=re.exec(text))!==null){add(m,m.index,m[0].length,' ',writerLang==='de'?'Mehrere Leerzeichen.':'Extra spaces.');if(issues.length>500)break}
     re=/[,;:](?=\p{L})/gu;
-    while((m=re.exec(text))!==null){add(m,m.index,1,m[0]+' ',writerLang==='de'?'Leerzeichen nach Satzzeichen fehlt.':'Missing space after punctuation.');if(issues.length>150)break}
+    while((m=re.exec(text))!==null){add(m,m.index,1,m[0]+' ',writerLang==='de'?'Leerzeichen nach Satzzeichen fehlt.':'Missing space after punctuation.');if(issues.length>500)break}
     if(proofLang.startsWith('en')){
       re=/\ba\s+([aeiou]\w+)/gi;while((m=re.exec(text))!==null){if(!/^(uni|use|one)/i.test(m[1]))add(m,m.index,m[0].length,'an '+m[1],'Consider “an” before a vowel sound.')}
       re=/\b(I)\s+(is|are)\b/g;while((m=re.exec(text))!==null)add(m,m.index,m[0].length,'I am','“I” is normally followed by “am”.');
@@ -2920,9 +2994,12 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     }
     return issues;
   }
-  function clearGrammarHighlights(){if(grammarHighlightSupported){CSS.highlights.delete('writer-grammar-hits');CSS.highlights.delete('writer-grammar-current')}}
+  function clearGrammarHighlights(){
+    if(grammarHighlightSupported){CSS.highlights.delete('writer-grammar-hits');CSS.highlights.delete('writer-grammar-current')}
+    if(grammarOverlay)grammarOverlay.replaceChildren();
+  }
   function clearGrammarResults(){
-    grammarIssues=[];grammarMapping=null;grammarSignature='';clearGrammarHighlights();
+    grammarIssues=[];grammarMapping=null;grammarSignature='';grammarPanelHasResults=false;grammarIgnored.clear();clearGrammarHighlights();
     $('grammar-results').replaceChildren();
     $('grammar-status').textContent=writerLang==='de'?'Sprache auswählen und Dokument prüfen.':'Select a language, then check your document.';
   }
@@ -2993,20 +3070,26 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
       return {offset:m.offset,length:m.length,original:text.slice(m.offset,m.offset+m.length),message:m.message||'Check grammar',replacements:(m.replacements||[]).slice(0,5).map(function(a){return a.value}).filter(function(x){return typeof x==='string'}),source:'online'};
     }).filter(function(m){return m.offset>=0&&m.length>0&&m.offset+m.length<=text.length});
     grammarIssues=incoming.concat(local.filter(function(item){return !incoming.some(function(m){return item.offset<m.offset+m.length&&m.offset<item.offset+item.length})})).sort(function(a,b){return a.offset-b.offset}).slice(0,200);
-    if(grammarHighlightSupported){var ranges=grammarIssues.slice(0,120).map(function(issue){return grammarRange(issue,snapshot)}).filter(Boolean);CSS.highlights.set('writer-grammar-hits',new Highlight(...ranges))}
+    grammarPanelHasResults=true;
+    updateGrammarUnderlines();
     renderGrammarIssues();
     if(onlineWarning)$('grammar-status').textContent=onlineWarning+' '+grammarIssues.length+(writerLang==='de'?' Hinweis(e).':' issue(s).');
   }
-  function toggleGrammarPanel(open){$('grammar-panel').classList.toggle('open',open);if(open){$('grammar-lang').value=proofLang} else clearGrammarHighlights()}
+  function toggleGrammarPanel(open){$('grammar-panel').classList.toggle('open',open);if(open){$('grammar-lang').value=proofLang} else if(grammarHighlightSupported)CSS.highlights.delete('writer-grammar-current')}
   $('grammar-open').addEventListener('click',function(){toggleGrammarPanel(!$('grammar-panel').classList.contains('open'))});
   $('grammar-run').addEventListener('click',function(){toggleGrammarPanel(true);runGrammarCheck()});
   $('grammar-check').addEventListener('click',runGrammarCheck);
-  $('grammar-clear').addEventListener('click',clearGrammarResults);
+  $('grammar-clear').addEventListener('click',function(){clearGrammarResults();scheduleLiveGrammar(true)});
   $('grammar-close').addEventListener('click',function(){toggleGrammarPanel(false)});
-  page.addEventListener('input',function(){if(grammarIssues.length){clearGrammarResults();grammarNotice(writerLang==='de'?'Text geändert – bitte erneut prüfen.':'Text changed — run the check again.')}});
+  page.addEventListener('input',function(){scheduleLiveGrammar(false)});
+  // The editor physically moves and splits text nodes while paginating. Reattach
+  // the underlines afterwards instead of injecting spans into editable text.
+  page.addEventListener('keyup',function(e){if(e.key==='Enter'||e.key==='Backspace'||e.key==='Delete')scheduleLiveGrammar(false)});
+
   collectUiTranslations();
   renderUiLanguage();
   setProofLang(proofLang);
+  scheduleLiveGrammar(true);
 
   refreshDateFields();applyLayout();fit();schedulePaginate(true);state();count();writerHistoryReset();
 })();
