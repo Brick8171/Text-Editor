@@ -259,11 +259,73 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
 .editor-popup .menu-info{color:var(--muted);font-size:11px;padding:3px 9px 6px}
 .editor-popup .menu-primary{margin-top:5px;background:var(--active);justify-content:center;font-weight:600}
 @media (max-width:600px){#title{padding:5px 7px}#title .app{font-size:11px}#status{gap:8px;padding:3px 7px}#status .savestate{display:none}#ribbon{height:94px}.grp{padding-left:5px;padding-right:5px}}
+
+/* ── Hello Kitty theme ── UI chrome only: printed pages and exported docs stay white. */
+:root[data-theme="kitty"]{
+  color-scheme:light;
+  --blue:#db5b93;--rib:#fff3f8;--ribline:#f1c1d4;--canvas:#ffeaf3;
+  --text:#69445a;--muted:#9a7084;--hover:#ffe0ed;--active:#ffc7dd;
+  --field:#fffafd;--fieldline:#e9b4cb;--tabtext:#fff;
+  --status:#fff3f8;--statustext:#844e69;
+}
+:root[data-theme="kitty"] #top{
+  position:relative;
+  background:linear-gradient(115deg,#e86da4 0%,#dd5c96 56%,#f38cbb 100%);
+  box-shadow:0 2px 8px #cb6c9a3d;
+}
+:root[data-theme="kitty"] #top::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(circle,#fff5 1.3px,transparent 1.8px);
+  background-size:19px 19px;opacity:.44;
+}
+:root[data-theme="kitty"] #title,:root[data-theme="kitty"] #tabs{position:relative}
+#kitty-mascot{display:none;align-items:center;justify-content:center;flex:none;height:31px;width:37px;margin-left:0}
+#kitty-mascot svg{width:37px;height:31px;filter:drop-shadow(0 2px 2px #a7447044)}
+:root[data-theme="kitty"] #kitty-mascot{display:flex}
+:root[data-theme="kitty"] #title .app{font-weight:750;letter-spacing:.2px}
+:root[data-theme="kitty"] #title .app::after{content:" ♡";color:#fff1f6}
+:root[data-theme="kitty"] #tabs button.on{background:#fff3f8;color:#b43a73;border-radius:9px 9px 0 0}
+:root[data-theme="kitty"] #tabs button:not(.on):hover{background:#ffffff38}
+:root[data-theme="kitty"] #ribbon{
+  background:linear-gradient(180deg,#fff8fc,#fff0f7);
+  border-bottom:2px solid #f4b6cf;
+}
+:root[data-theme="kitty"] .grp .lbl{color:#b15e83}
+:root[data-theme="kitty"] button.i:hover,
+:root[data-theme="kitty"] button.big:hover{border-color:#e5a0bf}
+:root[data-theme="kitty"] button.i.on,
+:root[data-theme="kitty"] button.big.on{border-color:#db5b93;background:#ffd3e5}
+:root[data-theme="kitty"] button.big svg{color:#d9528d}
+:root[data-theme="kitty"] #scroll{
+  background-color:#ffebf4;
+  background-image:radial-gradient(circle,#f6bdd4 1px,transparent 1.5px),
+                   radial-gradient(circle,#fff9fc 3px,transparent 3.5px);
+  background-size:28px 28px,56px 56px;
+  background-position:0 0,14px 14px;
+}
+:root[data-theme="kitty"] #page > .writer-sheet{
+  /* Shadow/outline don't affect content metrics or DOCX pagination. */
+  box-shadow:0 4px 20px #b85f8633,0 0 0 1px #f2c4d6;
+}
+:root[data-theme="kitty"] #status{border-top:2px solid #f3b9d0}
+:root[data-theme="kitty"] #status::before{content:"🎀";font-size:13px;line-height:1}
+:root[data-theme="kitty"] #ruler{border-color:#ecc0d2}
+:root[data-theme="kitty"] #msg{color:#b23b78}
+:root[data-theme="kitty"] input[type="range"]{accent-color:#df6b9f}
+:root[data-theme="kitty"] #tabs button:focus-visible,
+:root[data-theme="kitty"] button:focus-visible{outline-color:#e767a0}
+/* Keep the kitty interface out of PDFs; this is an editor theme, not document formatting. */
+@media print{
+  #kitty-mascot{display:none!important}
+  :root[data-theme="kitty"] #scroll{background:white!important;background-image:none!important}
+  :root[data-theme="kitty"] #page > .writer-sheet{box-shadow:none!important;outline:none!important}
+}
+
 </style>
 </head>
 <body>
 <div id="top">
-  <div id="title"><span class="app">📝 Writer</span><input id="docname" value="Document1" aria-label="Document name"></div>
+  <div id="title"><span class="app">📝 Writer</span><span id="kitty-mascot" aria-hidden="true"><svg viewBox="0 0 74 62" xmlns="http://www.w3.org/2000/svg"><path d="M11 20 7 4 24 12Q37 8 50 12L67 4 63 21C72 31 70 48 58 54Q37 64 16 54C4 47 3 31 11 20Z" fill="#fff" stroke="#b56484" stroke-width="1.5"/><g fill="none" stroke="#81536b" stroke-width="1.9" stroke-linecap="round"><path d="M20 36 5 32M20 42 4 43M54 36 69 32M54 42 70 43"/></g><ellipse cx="26" cy="34" rx="2.3" ry="3.1" fill="#533a47"/><ellipse cx="49" cy="34" rx="2.3" ry="3.1" fill="#533a47"/><ellipse cx="37.5" cy="41" rx="4.3" ry="3" fill="#f6d05d"/><path d="M46 15C36 2 32 8 35 18 25 7 22 18 35 25L40 21C51 27 62 18 50 12Z" fill="#f04e86" stroke="#d94078" stroke-width="1"/><circle cx="40" cy="18" r="4.4" fill="#ffb0cd" stroke="#d94078" stroke-width="1"/></svg></span><input id="docname" value="Document1" aria-label="Document name"></div>
   <div id="tabs"><button data-tab="file">File</button><button class="on" data-tab="home">Home</button><button data-tab="insert">Insert</button><button data-tab="layout">Layout</button><button data-tab="view">View</button><button data-tab="picture" id="picture-tab" aria-label="Picture formatting">Picture</button></div>
 </div>
 
@@ -335,7 +397,7 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="z100"><span data-ic="zoom"></span>100%</button><button class="big" id="zfit"><span data-ic="fit"></span>Fit width</button></div></div><div class="lbl">Zoom</div></div>
     <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="rulerbtn"><span data-ic="ruler"></span>Ruler</button><button class="big" id="guidebtn"><span data-ic="pagebreak"></span>Page guides</button></div></div><div class="lbl">Show</div></div>
     <div class="grp"><div class="body"><div class="row"><select id="pagepreview" title="Adjust only how Word lines fit on screen; DOCX spacing stays unchanged" aria-label="Word page preview fit" style="min-width:155px"><option value="1.08">More room</option><option value="1.10">Slightly more room</option><option value="1.12" selected>Word-like (default)</option><option value="1.14">Slightly tighter</option><option value="1.16">Tighter fit</option></select></div></div><div class="lbl">Page preview fit</div></div>
-    <div class="grp" style="border-right:0"><div class="body"><div class="bigrow"><button class="big" id="theme"><span data-ic="moon"></span>Dark / light</button><button class="big" id="help" title="Keyboard shortcuts"><span data-ic="help"></span>Help</button></div></div><div class="lbl">Appearance</div></div>
+    <div class="grp" style="border-right:0"><div class="body"><div class="bigrow"><button class="big" id="theme"><span data-ic="moon"></span>Dark / light</button><button class="big" id="kitty-theme" title="Toggle the pink Hello Kitty theme" aria-pressed="false"><span data-ic="bow"></span>Hello Kitty</button><button class="big" id="help" title="Keyboard shortcuts"><span data-ic="help"></span>Help</button></div></div><div class="lbl">Appearance</div></div>
   </div>
 </div>
 <div id="fontpanel" class="editor-popup" role="dialog" aria-label="Font library">
@@ -1251,6 +1313,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     folder:'<path d="M2 4.5h4l1.5 1.5H14v7H2z"/>',
     download:'<path d="M8 2v8M5 7l3 3 3-3M3 13h10"/>',
     printer:'<path d="M4 6V2h8v4"/><rect x="2" y="6" width="12" height="6" rx="1"/><path d="M4 10h8v4H4z"/>',
+    bow:'<path d="M6.5 6C4 2 1.5 2.2 1.5 5.7c0 2.5 2.2 3.1 5 2.4M9.5 6C12 2 14.5 2.2 14.5 5.7c0 2.5-2.2 3.1-5 2.4"/><rect x="6.4" y="5.5" width="3.2" height="3.6" rx="1.2"/><path d="m5.9 9-1.7 4m5.9-4 1.7 4"/>',
     moon:'<path d="M12.5 9.5A5.5 5.5 0 016.5 3.5a5.5 5.5 0 106 6z"/>',
     search:'<circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/>',
     help:'<circle cx="8" cy="8" r="6"/><path d="M6.5 6a1.6 1.6 0 113 1c-.8.8-1.5 1-1.5 2.1M8 11.9v.3"/>',
@@ -2615,10 +2678,29 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   $('savetxt').addEventListener('click',function(){refreshDateFields();var name=safeName()+'.txt';downloadFile(page.innerText,name,'text/plain;charset=utf-8');say('Downloaded '+name)});
   $('savedoc').addEventListener('click',saveDocx);
   document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='s'){e.preventDefault();saveDocx()}});
+  function setWriterTheme(theme){
+    document.documentElement.setAttribute('data-theme',theme);
+    store('writer-theme',theme);
+    var active=theme==='kitty';
+    $('kitty-theme').classList.toggle('on',active);
+    $('kitty-theme').setAttribute('aria-pressed',String(active));
+  }
   $('theme').addEventListener('click',function(){
-    var r=document.documentElement,dark=r.getAttribute('data-theme')==='dark'||(!r.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme:dark)').matches);
-    var n=dark?'light':'dark';r.setAttribute('data-theme',n);store('writer-theme',n);
+    var current=document.documentElement.getAttribute('data-theme');
+    var dark=current==='dark'||(!current&&matchMedia('(prefers-color-scheme:dark)').matches);
+    setWriterTheme(dark?'light':'dark');
   });
+  $('kitty-theme').addEventListener('click',function(){
+    var current=document.documentElement.getAttribute('data-theme');
+    if(current==='kitty')setWriterTheme(load('writer-before-kitty')||'light');
+    else{
+      store('writer-before-kitty',current|| (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));
+      setWriterTheme('kitty');
+    }
+  });
+  // Restore the button state after a refresh (theme was loaded on startup).
+  $('kitty-theme').classList.toggle('on',document.documentElement.getAttribute('data-theme')==='kitty');
+  $('kitty-theme').setAttribute('aria-pressed',String(document.documentElement.getAttribute('data-theme')==='kitty'));
   $('rulerbtn').classList.add('on');
   $('rulerbtn').addEventListener('click',function(){var r=$('ruler');var h=r.style.display==='none';r.style.display=h?'':'none';this.classList.toggle('on',h)});
   $('guidebtn').addEventListener('click',function(){this.classList.toggle('on',page.classList.toggle('guides'))});
