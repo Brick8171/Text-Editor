@@ -163,7 +163,12 @@ select{height:24px;border:1px solid var(--fieldline);border-radius:2px;backgroun
 #tabs button[data-tab="picture"].available{display:inline-block}
 #tabs button[data-tab="picture"].on{background:var(--rib);color:var(--blue)}
 #page{position:relative;isolation:isolate}
-#page img.writer-picture-selected{outline:2px solid #2878cc;outline-offset:3px;cursor:pointer}
+#page img.writer-picture-selected{outline:2px solid #2878cc;outline-offset:3px;cursor:grab}
+#page img.writer-picture-selected:active{cursor:grabbing}
+#page.writer-format-paint{cursor:crosshair}
+#page.writer-format-paint *:not(img){cursor:crosshair!important}
+#formatpainter.on{background:var(--active);border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}
+.writer-picture-drag-ghost{position:fixed;pointer-events:none;z-index:1400;opacity:.78;box-shadow:0 8px 22px #0004;outline:2px dashed #2878cc;transform:none!important;max-width:none!important;user-select:none}
 #page img[style*="float: left"],#page img[style*="float: right"]{max-width:80%}
 #page img{box-sizing:border-box}
 #page img[style*="position: absolute"]{max-width:none}
@@ -269,6 +274,7 @@ button.big:focus-visible,button.i:focus-visible,.tb:focus-visible{outline:2px so
   <!-- HOME -->
   <div class="panel on" id="p-home">
     <div class="grp"><div class="body"><div class="row"><button class="i" data-cmd="undo" title="Undo (Ctrl+Z)" data-ic="undo"></button></div><div class="row"><button class="i" data-cmd="redo" title="Redo (Ctrl+Y)" data-ic="redo"></button></div></div><div class="lbl">Undo</div></div>
+    <div class="grp"><div class="body"><div class="bigrow"><button class="big" id="formatpainter" aria-pressed="false" title="Format Painter: click to paint once, double-click to paint repeatedly. Ctrl+Shift+C copies formatting; Ctrl+Shift+V applies it."><span data-ic="paintbrush"></span>Format Painter</button></div></div><div class="lbl">Clipboard</div></div>
     <div class="grp"><div class="body">
       <div class="row"><select id="font" title="Font" style="width:176px" aria-label="Font family"><optgroup label="Office &amp; system fonts"><option value="Aptos" style="font-family:&#x27;Aptos&#x27;,sans-serif">Aptos</option><option value="Aptos Display" style="font-family:&#x27;Aptos Display&#x27;,sans-serif">Aptos Display</option><option value="Calibri" selected style="font-family:&#x27;Calibri&#x27;,sans-serif">Calibri</option><option value="Cambria" style="font-family:&#x27;Cambria&#x27;,sans-serif">Cambria</option><option value="Candara" style="font-family:&#x27;Candara&#x27;,sans-serif">Candara</option><option value="Constantia" style="font-family:&#x27;Constantia&#x27;,sans-serif">Constantia</option><option value="Corbel" style="font-family:&#x27;Corbel&#x27;,sans-serif">Corbel</option><option value="Consolas" style="font-family:&#x27;Consolas&#x27;,sans-serif">Consolas</option><option value="Arial" style="font-family:&#x27;Arial&#x27;,sans-serif">Arial</option><option value="Arial Narrow" style="font-family:&#x27;Arial Narrow&#x27;,sans-serif">Arial Narrow</option><option value="Arial Black" style="font-family:&#x27;Arial Black&#x27;,sans-serif">Arial Black</option><option value="Times New Roman" style="font-family:&#x27;Times New Roman&#x27;,sans-serif">Times New Roman</option><option value="Georgia" style="font-family:&#x27;Georgia&#x27;,sans-serif">Georgia</option><option value="Garamond" style="font-family:&#x27;Garamond&#x27;,sans-serif">Garamond</option><option value="Verdana" style="font-family:&#x27;Verdana&#x27;,sans-serif">Verdana</option><option value="Tahoma" style="font-family:&#x27;Tahoma&#x27;,sans-serif">Tahoma</option><option value="Segoe UI" style="font-family:&#x27;Segoe UI&#x27;,sans-serif">Segoe UI</option><option value="Trebuchet MS" style="font-family:&#x27;Trebuchet MS&#x27;,sans-serif">Trebuchet MS</option><option value="Courier New" style="font-family:&#x27;Courier New&#x27;,sans-serif">Courier New</option><option value="Palatino Linotype" style="font-family:&#x27;Palatino Linotype&#x27;,sans-serif">Palatino Linotype</option><option value="Book Antiqua" style="font-family:&#x27;Book Antiqua&#x27;,sans-serif">Book Antiqua</option><option value="Century Gothic" style="font-family:&#x27;Century Gothic&#x27;,sans-serif">Century Gothic</option><option value="Franklin Gothic Medium" style="font-family:&#x27;Franklin Gothic Medium&#x27;,sans-serif">Franklin Gothic Medium</option><option value="Impact" style="font-family:&#x27;Impact&#x27;,sans-serif">Impact</option><option value="Comic Sans MS" style="font-family:&#x27;Comic Sans MS&#x27;,sans-serif">Comic Sans MS</option><option value="Lucida Console" style="font-family:&#x27;Lucida Console&#x27;,sans-serif">Lucida Console</option><option value="Helvetica Neue" style="font-family:&#x27;Helvetica Neue&#x27;,sans-serif">Helvetica Neue</option><option value="Baskerville" style="font-family:&#x27;Baskerville&#x27;,sans-serif">Baskerville</option><option value="Avenir Next" style="font-family:&#x27;Avenir Next&#x27;,sans-serif">Avenir Next</option><option value="Gill Sans" style="font-family:&#x27;Gill Sans&#x27;,sans-serif">Gill Sans</option><option value="Menlo" style="font-family:&#x27;Menlo&#x27;,sans-serif">Menlo</option><option value="Liberation Sans" style="font-family:&#x27;Liberation Sans&#x27;,sans-serif">Liberation Sans</option><option value="Liberation Serif" style="font-family:&#x27;Liberation Serif&#x27;,sans-serif">Liberation Serif</option><option value="DejaVu Sans" style="font-family:&#x27;DejaVu Sans&#x27;,sans-serif">DejaVu Sans</option><option value="DejaVu Serif" style="font-family:&#x27;DejaVu Serif&#x27;,sans-serif">DejaVu Serif</option></optgroup><optgroup label="More fonts (online)"><option value="Inter" style="font-family:&#x27;Inter&#x27;,sans-serif">Inter</option><option value="Roboto" style="font-family:&#x27;Roboto&#x27;,sans-serif">Roboto</option><option value="Open Sans" style="font-family:&#x27;Open Sans&#x27;,sans-serif">Open Sans</option><option value="Lato" style="font-family:&#x27;Lato&#x27;,sans-serif">Lato</option><option value="Montserrat" style="font-family:&#x27;Montserrat&#x27;,sans-serif">Montserrat</option><option value="Poppins" style="font-family:&#x27;Poppins&#x27;,sans-serif">Poppins</option><option value="Nunito" style="font-family:&#x27;Nunito&#x27;,sans-serif">Nunito</option><option value="Raleway" style="font-family:&#x27;Raleway&#x27;,sans-serif">Raleway</option><option value="Oswald" style="font-family:&#x27;Oswald&#x27;,sans-serif">Oswald</option><option value="Quicksand" style="font-family:&#x27;Quicksand&#x27;,sans-serif">Quicksand</option><option value="Work Sans" style="font-family:&#x27;Work Sans&#x27;,sans-serif">Work Sans</option><option value="DM Sans" style="font-family:&#x27;DM Sans&#x27;,sans-serif">DM Sans</option><option value="Rubik" style="font-family:&#x27;Rubik&#x27;,sans-serif">Rubik</option><option value="Archivo" style="font-family:&#x27;Archivo&#x27;,sans-serif">Archivo</option><option value="Barlow" style="font-family:&#x27;Barlow&#x27;,sans-serif">Barlow</option><option value="Ubuntu" style="font-family:&#x27;Ubuntu&#x27;,sans-serif">Ubuntu</option><option value="Fira Sans" style="font-family:&#x27;Fira Sans&#x27;,sans-serif">Fira Sans</option><option value="Source Sans 3" style="font-family:&#x27;Source Sans 3&#x27;,sans-serif">Source Sans 3</option><option value="Merriweather" style="font-family:&#x27;Merriweather&#x27;,sans-serif">Merriweather</option><option value="Playfair Display" style="font-family:&#x27;Playfair Display&#x27;,sans-serif">Playfair Display</option><option value="Libre Baskerville" style="font-family:&#x27;Libre Baskerville&#x27;,sans-serif">Libre Baskerville</option><option value="PT Serif" style="font-family:&#x27;PT Serif&#x27;,sans-serif">PT Serif</option><option value="Fira Code" style="font-family:&#x27;Fira Code&#x27;,sans-serif">Fira Code</option><option value="Caveat" style="font-family:&#x27;Caveat&#x27;,sans-serif">Caveat</option><option value="Dancing Script" style="font-family:&#x27;Dancing Script&#x27;,sans-serif">Dancing Script</option><option value="Pacifico" style="font-family:&#x27;Pacifico&#x27;,sans-serif">Pacifico</option><option value="Bebas Neue" style="font-family:&#x27;Bebas Neue&#x27;,sans-serif">Bebas Neue</option><option value="Lobster" style="font-family:&#x27;Lobster&#x27;,sans-serif">Lobster</option><option value="Cinzel" style="font-family:&#x27;Cinzel&#x27;,sans-serif">Cinzel</option></optgroup></select><button class="i" id="fontbrowse" title="Search all fonts and styles" aria-label="Browse fonts" style="width:25px;flex:none;font-size:16px">⌕</button><select id="size" title="Font size" style="width:52px"></select></div>
       <div class="row">
@@ -1247,6 +1253,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     help:'<circle cx="8" cy="8" r="6"/><path d="M6.5 6a1.6 1.6 0 113 1c-.8.8-1.5 1-1.5 2.1M8 11.9v.3"/>',
     calendar:'<rect x="2" y="3" width="12" height="11" rx="1"/><path d="M5 1.5v3M11 1.5v3M2 6.5h12M5 9h2M9 9h2M5 11.5h2"/>',
     spacing:'<path d="M3 2v12M1 4l2-2 2 2M1 12l2 2 2-2M7 4h8M7 7h8M7 10h8M7 13h8"/>',
+    paintbrush:'<path d="M12.8 2.2l1 1a1 1 0 010 1.4L7.5 10.9 5.1 8.5l6.3-6.3a1 1 0 011.4 0z"/><path d="M4.7 9l2.3 2.3c0 2.4-1.3 3.5-3.9 3.5-1.2 0-1.6-.6-1.9-1.1 1.5-.4 2.2-1.3 2.2-2.5C3.4 10.1 3.8 9.4 4.7 9z"/>',
     borders:'<rect x="2" y="2" width="12" height="12"/><path d="M8 2v12M2 8h12"/>'
   };
   document.querySelectorAll('[data-ic]').forEach(function(e){
@@ -1373,6 +1380,8 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     catch(e){marker.remove();return null}
   }
   function followCaret(smooth){
+    // Moving/formatting an image must never scroll to an unrelated text caret.
+    if(typeof selectedPicture!=='undefined'&&selectedPicture&&page.contains(selectedPicture))return;
     if(document.activeElement!==page&&!page.contains(document.activeElement))return;
     var rect=caretBox();if(!rect)return;
     var box=sc.getBoundingClientRect(),padding=48;
@@ -1389,7 +1398,7 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     var current=sheetNodes();
     if(!force&&!needsPagination(current)){followCaret(false);return}
     paginating=true;
-    var focused=page.contains(document.activeElement)||document.activeElement===page;
+    var focused=(page.contains(document.activeElement)||document.activeElement===page)&&!(typeof selectedPicture!=='undefined'&&selectedPicture&&page.contains(selectedPicture));
     // A character offset is ambiguous in a document with empty paragraphs:
     // Enter adds no text, so every blank line has the exact same offset.
     // Carry a real DOM bookmark through the rebuild instead.
@@ -1619,6 +1628,111 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     writerHistoryBegin();restoreSel();document.execCommand(c,false,v||null);after();
   }
   function after(){saveSel();state();writerHistoryQueue('command');schedulePaginate();count();persist()}
+  /* Word-like Format Painter (one click paints once; double-click locks it).
+     This is custom because execCommand has no reliable format-painter API. */
+  var painterStyle=null,painterArmed=false,painterLocked=false,painterApplying=false;
+  function painterStyleAt(range){
+    var node=range.startContainer;
+    if(node.nodeType===1&&node.childNodes[range.startOffset])node=node.childNodes[range.startOffset];
+    var el=node.nodeType===3?node.parentElement:node;
+    if(!el||!page.contains(el))return null;
+    if(el.matches&&el.matches('.writer-sheet'))el=el.firstElementChild||el;
+    var cs=getComputedStyle(el),highlight='transparent',ancestor=el;
+    while(ancestor&&ancestor!==page){
+      var bg=getComputedStyle(ancestor).backgroundColor;
+      if(bg&&bg!=='transparent'&&bg!=='rgba(0, 0, 0, 0)'&&ancestor.classList&&!ancestor.classList.contains('writer-sheet')){highlight=bg;break}
+      ancestor=ancestor.parentElement;
+    }
+    var paragraph=el.closest('p,h1,h2,h3,h4,h5,h6,li,blockquote,pre');
+    var blockStyle=paragraph?getComputedStyle(paragraph):null;
+    return {fontFamily:cs.fontFamily,fontSize:cs.fontSize,fontWeight:cs.fontWeight,fontStyle:cs.fontStyle,
+      color:cs.color,textDecoration:cs.textDecorationLine||'none',backgroundColor:highlight,
+      paragraph:paragraph?{textAlign:blockStyle.textAlign,marginTop:blockStyle.marginTop,marginBottom:blockStyle.marginBottom,lineHeight:paragraph.style.lineHeight||''}:null};
+  }
+  function painterCopy(){
+    var r=saved&&page.contains(saved.commonAncestorContainer)?saved:null;
+    if(!r){var selection=getSelection();if(selection.rangeCount&&page.contains(selection.anchorNode))r=selection.getRangeAt(0)}
+    if(!r){say('Select formatted text to copy its formatting.');return false}
+    painterStyle=painterStyleAt(r);
+    return !!painterStyle;
+  }
+  function painterUI(){
+    $('formatpainter').classList.toggle('on',painterArmed);
+    $('formatpainter').setAttribute('aria-pressed',String(painterArmed));
+    page.classList.toggle('writer-format-paint',painterArmed);
+  }
+  function painterStop(){painterArmed=false;painterLocked=false;painterUI()}
+  function painterArm(locked){
+    if(!painterCopy())return;
+    painterArmed=true;painterLocked=!!locked;painterUI();
+    say(locked?'Format Painter locked: select text repeatedly; press Esc when finished.':'Format Painter: highlight the text to format.');
+  }
+  function painterRemoveConflicts(root){
+    // Existing B/I/FONT tags can override the new style via inheritance.
+    // Keep links, text nodes and layout spans; only clear font-related markup.
+    var nodes=[];var walker=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT),n;
+    while((n=walker.nextNode()))nodes.push(n);
+    for(var el of nodes.reverse()){
+      if(!el.isConnected&&!root.contains(el))continue;
+      if(el.style){for(var prop of ['font-family','font-size','font-weight','font-style','color','background-color','text-decoration','text-decoration-line'])el.style.removeProperty(prop)}
+      if(el.tagName==='FONT')for(var name of ['face','color','size'])el.removeAttribute(name);
+      if(['B','STRONG','I','EM','U','S','STRIKE','DEL'].includes(el.tagName)){
+        var parent=el.parentNode;if(parent){while(el.firstChild)parent.insertBefore(el.firstChild,el);el.remove()}
+      }
+    }
+  }
+  function painterApply(range){
+    if(!painterStyle||!range||range.collapsed||!page.contains(range.commonAncestorContainer))return false;
+    painterApplying=true;
+    try{
+      writerHistoryBegin();
+      var format=painterStyle,fragment=range.extractContents();
+      painterRemoveConflicts(fragment);
+      var span=document.createElement('span');
+      for(var prop of ['fontFamily','fontSize','fontWeight','fontStyle','color'])span.style[prop]=format[prop];
+      span.style.textDecoration=format.textDecoration;
+      if(format.backgroundColor!=='transparent')span.style.backgroundColor=format.backgroundColor;
+      span.appendChild(fragment);range.insertNode(span);
+      if(format.paragraph){
+        var block=span.closest('p,h1,h2,h3,h4,h5,h6,li,blockquote');
+        if(block){block.style.textAlign=format.paragraph.textAlign;
+          // Align paragraph style as in Word, without overriding explicit
+          // page-metric calibration on imported DOCX lines.
+          if(!block.hasAttribute('data-writer-word-line')){
+            block.style.marginTop=format.paragraph.marginTop;
+            block.style.marginBottom=format.paragraph.marginBottom;
+            if(format.paragraph.lineHeight)block.style.lineHeight=format.paragraph.lineHeight;
+          }
+        }
+      }
+      var selection=getSelection(),r=document.createRange();r.selectNodeContents(span);
+      selection.removeAllRanges();selection.addRange(r);saved=r.cloneRange();
+      after();return true;
+    }finally{painterApplying=false}
+  }
+  $('formatpainter').addEventListener('click',function(e){
+    if(e.detail>1){painterArm(true);return}
+    if(painterArmed&&!painterLocked)painterStop();else painterArm(painterLocked);
+  });
+  $('formatpainter').addEventListener('dblclick',function(e){e.preventDefault();painterArm(true)});
+  page.addEventListener('mouseup',function(){
+    if(!painterArmed||painterApplying)return;
+    // The native selection is finalized only after mouseup.
+    requestAnimationFrame(function(){
+      if(!painterArmed)return;
+      var selection=getSelection();if(!selection.rangeCount||selection.isCollapsed)return;
+      if(painterApply(selection.getRangeAt(0).cloneRange())&&!painterLocked)painterStop();
+    });
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&painterArmed){painterStop();return}
+    if(!(e.ctrlKey||e.metaKey)||!e.shiftKey||e.altKey)return;
+    if(e.key.toLowerCase()!=='c'&&e.key.toLowerCase()!=='v')return;
+    var t=e.target;if(t&&!page.contains(t)&&t!==page)return;
+    e.preventDefault();e.stopPropagation();
+    if(e.key.toLowerCase()==='c'){if(painterCopy())say('Text formatting copied (Ctrl+Shift+V to apply).')}
+    else{var sel=getSelection();if(sel.rangeCount&&!sel.isCollapsed){painterApply(sel.getRangeAt(0).cloneRange());painterStop()}}
+  },true);
   /* Word-like line/paragraph spacing and borders (selected paragraphs or cells). */
   var activePopup=null;
   function closePopup(){
@@ -1985,6 +2099,12 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
     r.onload=function(){html('<img src="'+r.result+'" alt="Picture" style="display:inline;float:none;position:static;vertical-align:baseline">')};r.readAsDataURL(f);this.value='';
   });
   /* Picture Format contextual ribbon: operates on a real selected document image. */
+  // Browser-native IMG drag-and-drop mutates contenteditable and can reorder
+  // document sheets before pagination runs. Reposition images on pointerup.
+  page.addEventListener('dragstart',function(e){
+    if(e.target&&e.target.closest&&e.target.closest('img')){e.preventDefault();return false}
+  },true);
+  page.querySelectorAll('img').forEach(function(img){img.draggable=false});
   var selectedPicture=null,priorTab='home';
   function pictureActive(){return selectedPicture&&page.contains(selectedPicture)?selectedPicture:null}
   function selectPicture(img){
@@ -2077,6 +2197,92 @@ if(typeof module!=='undefined')module.exports=writerBuildDocx;
   });
   sc.addEventListener('scroll',positionImageHandles,{passive:true});
   window.addEventListener('resize',positionImageHandles);
+  /* Stable mouse/touch picture positioning.
+     The image stays in its original paragraph while a fixed overlay follows
+     the pointer. On release we make ONE DOM mutation and ONE pagination pass.
+     This prevents native contenteditable dragging from moving images to a
+     different sheet or unexpectedly scrolling to another page. */
+  var pictureMove=null;
+  function pictureRangeAt(x,y){
+    var r=null;
+    if(document.caretRangeFromPoint)r=document.caretRangeFromPoint(x,y);
+    else if(document.caretPositionFromPoint){var p=document.caretPositionFromPoint(x,y);if(p){r=document.createRange();r.setStart(p.offsetNode,p.offset);r.collapse(true)}}
+    return r&&page.contains(r.startContainer)?r:null;
+  }
+  function pictureDropSheet(x,y){
+    return sheetNodes().find(function(sh){var r=sh.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom})||null;
+  }
+  function pictureMoveEnd(e,cancel){
+    var drag=pictureMove;if(!drag||e.pointerId!==drag.pointerId)return;
+    pictureMove=null;
+    if(drag.ghost){drag.ghost.remove();drag.img.style.opacity=drag.oldOpacity}
+    if(!drag.moved||cancel){positionImageHandles();return}
+    var img=drag.img,dropSheet=pictureDropSheet(e.clientX,e.clientY);
+    if(!dropSheet||!page.contains(img)){positionImageHandles();return}
+    var range=pictureRangeAt(e.clientX,e.clientY);
+    try{
+      writerHistoryBegin();
+      if(img.style.position==='absolute'){
+        // Floats keep their wrap mode and are anchored to a paragraph on the
+        // sheet where dropped. Convert screen coordinates to local CSS pixels.
+        var target=range&&range.startContainer.nodeType===3?range.startContainer.parentElement:range&&range.startContainer;
+        var anchor=target&&target.closest?target.closest('p,h1,h2,h3,h4,h5,h6,blockquote'):null;
+        if(!anchor||!dropSheet.contains(anchor))anchor=dropSheet.querySelector('p,h1,h2,h3,h4,h5,h6,blockquote');
+        if(!anchor){anchor=document.createElement('p');anchor.appendChild(document.createElement('br'));dropSheet.appendChild(anchor)}
+        if(!anchor.contains(img))anchor.appendChild(img);
+        anchor.style.position='relative';
+        var box=anchor.getBoundingClientRect(),z=Math.max(.1,curZoom);
+        img.style.left=Math.round((drag.rect.left+(e.clientX-drag.startX)-box.left)/z)+'px';
+        img.style.top=Math.round((drag.rect.top+(e.clientY-drag.startY)-box.top)/z)+'px';
+        img.style.right='';
+        // DOCX floating anchors use EMUs (9,525 units per CSS px). Without
+        // updated offsets Word would put the moved picture back at 0,0.
+        var wasThrough=img.getAttribute('data-writer-anchor-wrap')==='through';
+        img.setAttribute('data-writer-anchor-h',String(Math.round(parseFloat(img.style.left)*9525)));
+        img.setAttribute('data-writer-anchor-v',String(Math.round(parseFloat(img.style.top)*9525)));
+        img.setAttribute('data-writer-anchor-href','column');
+        img.setAttribute('data-writer-anchor-vref','paragraph');
+        img.setAttribute('data-writer-anchor-wrap',wasThrough?'through':'none');
+      }else{
+        if(!range){range=document.createRange();range.selectNodeContents(dropSheet);range.collapse(false)}
+        // Don't insert into the IMG or into a noneditable control.
+        if(range.startContainer===img||img.contains(range.startContainer)){positionImageHandles();return}
+        range.insertNode(img);
+        img.draggable=false;
+      }
+      selectPicture(img);updatePictureUI();positionImageHandles();after();
+    }catch(error){say('Could not move the picture: '+error.message)}
+  }
+  page.addEventListener('pointerdown',function(e){
+    var img=e.target&&e.target.closest&&e.target.closest('img');
+    if(!img||!page.contains(img)||e.button!==0||imageHandleDrag)return;
+    e.preventDefault();e.stopPropagation();
+    selectPicture(img);
+    img.draggable=false;
+    var rect=img.getBoundingClientRect();
+    pictureMove={img:img,pointerId:e.pointerId,rect:rect,startX:e.clientX,startY:e.clientY,
+      oldOpacity:img.style.opacity,moved:false,ghost:null};
+    try{img.setPointerCapture(e.pointerId)}catch(err){}
+  },true);
+  document.addEventListener('pointermove',function(e){
+    var drag=pictureMove;if(!drag||e.pointerId!==drag.pointerId)return;
+    var dx=e.clientX-drag.startX,dy=e.clientY-drag.startY;
+    if(!drag.moved&&Math.hypot(dx,dy)<5)return;
+    if(!drag.moved){
+      drag.moved=true;var clone=drag.img.cloneNode(false);clone.className='writer-picture-drag-ghost';
+      clone.draggable=false;clone.style.cssText='';clone.style.width=drag.rect.width+'px';clone.style.height=drag.rect.height+'px';
+      clone.style.position='fixed';clone.style.pointerEvents='none';clone.style.zIndex='1400';clone.style.opacity='.78';
+      clone.style.maxWidth='none';clone.style.transform='none';clone.style.boxShadow='0 8px 22px #0004';
+      clone.style.outline='2px dashed #2878cc';
+      document.body.appendChild(clone);drag.ghost=clone;
+      drag.img.style.opacity='.35';
+    }
+    e.preventDefault();
+    drag.ghost.style.left=(drag.rect.left+dx)+'px';drag.ghost.style.top=(drag.rect.top+dy)+'px';
+  },true);
+  document.addEventListener('pointerup',function(e){pictureMoveEnd(e,false)},true);
+  document.addEventListener('pointercancel',function(e){pictureMoveEnd(e,true)},true);
+  window.addEventListener('blur',function(){if(pictureMove)pictureMoveEnd({pointerId:pictureMove.pointerId},true)});
   function picNumber(value,def){var v=parseInt(value,10);return Number.isFinite(v)&&v>=16&&v<=2000?v:def}
   function pictureSize(img){var r=img.getBoundingClientRect();return {w:Math.round(parseFloat(img.style.width)||img.width||r.width/curZoom||img.naturalWidth||200),h:Math.round(parseFloat(img.style.height)||img.height||r.height/curZoom||img.naturalHeight||150)}}
   function pictureWrapMode(img){
